@@ -1,6 +1,15 @@
+html{
+background-color: rgb(27, 26, 27);
+}
+
+h1{
+color: white;
+}
+
 body {text-align: center;}
 canvas {
 border: 1px solid black;
 width: 600px;
 height: 600px;
+background-color: rgb(47, 114, 34);
 }
