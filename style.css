@@ -9,4 +9,5 @@ color: white;
 body {text-align: center;}
 canvas {
 border: 1px solid rgb(255, 255, 255);
+border-radius: 2px;
 }
