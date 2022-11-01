@@ -5,6 +5,8 @@ let down = document.getElementById("down");
 let left = document.getElementById("left");
 let right = document.getElementById("right");
 let bg = document.getElementById("bg");
+let bg3 = document.getElementById("bg3");
+let bg4 = document.getElementById("bg4");
 let cage = document.getElementById("cage");
 let hut = document.getElementById("hut");
 let cage2 = document.getElementById("cageunlocked");
@@ -14,12 +16,13 @@ let fireball = {
   w: 80,
   h: 50,
 };
-let background = 1;
+let background = bg;
+let level = 1;
 let locked = 1;
 let gold = 0;
 let vx = 0;
 let vy = 0;
-let xkey = 1680 * Math.random();
+let xkey = 900 * Math.random();
 let ykey = 850 * Math.random();
 let xcage = 450 * Math.random();
 let ycage = 450 * Math.random();
@@ -38,7 +41,7 @@ let fireballSound = new Audio("12-Gauge-Pump-Action-Shotgun.mp3");
 let creak = new Audio("creak.mp3");
 let cash = new Audio("cash.mp3");
 
-c.width = 1880;
+c.width = 970;
 c.height = 970;
 
 let player = {
@@ -141,13 +144,18 @@ function checkCollision() {
     player.x = -20;
   } else if (player.x > c.width - 130 && gold > 1) {
     player.x = 0;
-    background = 2;
+    level = 2;
   } else if (player.x > c.width - 130) {
     player.x = c.width - 130;
   }
 
   if (player.y <= 0) {
     player.y = 0;
+  } else if (player.y >= 870 && level == 3) {
+    player.y = yhut + 90;
+    player.x = xhut + 25;
+    level = 2
+    background = bg
   } else if (player.y >= 870) {
     player.y = 870;
   }
@@ -165,16 +173,16 @@ function checkCollision() {
 
     let closest = Math.min(side1, side2, side3, side4);
 
-    if (side1 == closest && background == 1) {
+    if (side1 == closest && level == 1) {
       player.x = xcage - 110;
       money();
-    } else if (side2 == closest && background == 1) {
+    } else if (side2 == closest && level == 1) {
       player.x = xcage + 150;
       money();
-    } else if (side3 == closest && background == 1) {
+    } else if (side3 == closest && level == 1) {
       player.y = ycage - 60;
       money();
-    } else if (side4 == closest && background == 1) {
+    } else if (side4 == closest && level == 1) {
       player.y = ycage + 185;
       money();
     }
@@ -182,32 +190,20 @@ function checkCollision() {
 }
 
 function checkCollisionHut() {
-  if (background == 2) {
-    if (
-      player.x + 110 > xhut &&
-      player.x < xhut + 150 &&
-      player.y + 60 > yhutxhut &&
-      player.y < yhutxhut + 185
-    ) {
-      let hutside1 = Math.abs(player.x + 110 - xhut);
-      let hutside2 = Math.abs(player.x - (xhut + 150));
-      let hutside3 = Math.abs(player.y + 60 - yhut);
-      let hutside4 = Math.abs(player.y - (yhut + 185));
+  if (level == 2 &&
+    player.x >= xhut - 50 - player.w / 2 &&
+    player.x <= xhut + 50 - player.w / 2 &&
+    player.y >= yhut - 50 - player.h / 2 &&
+    player.y <= yhut + 50 - player.h / 2) {      
+    player.x = c.width / 2 - 150 / 2,
+    player.y = 700
+    player.w = 200
+    player.h = 133
+    background = bg3
+    level = 3
+  }}
 
-      let hutclosest = Math.min(side1, side2, side3, side4);
 
-      if (hutside1 == hutclosest && background == 2) {
-        player.x = xhut - 110;
-      } else if (hutside2 == hutclosest && background == 2) {
-        player.x = xhut + 150;
-      } else if (hutside3 == hutclosest && background == 2) {
-        player.y = yhut - 60;
-      } else if (hutside4 == hutclosest && background == 2) {
-        player.y = yhut + 185;
-      }
-    }
-  }
-}
 
 function checkCollisionkey() {
   if (
@@ -256,9 +252,8 @@ function changeSpeed() {
     vy += -Math.sign(vy) * Math.sqrt(2);
   }
 }
-
 function loop() {
-  ctx.drawImage(bg, 0, 0, c.width, c.height);
+  ctx.drawImage(background, 0, 0, c.width, c.height);
 
   changeSpeed();
 
@@ -269,14 +264,14 @@ function loop() {
   checkCollisionHut();
 
   ctx.drawImage(image, player.x, player.y, player.w, player.h);
-  if (background == 1) {
+  if (level == 1) {
     ctx.drawImage(cage, xcage, ycage, 200, 200);
   }
-  if (background == 2) {
-    ctx.drawImage(hut, xhut, yhut, 200, 200);
+  if (level == 2) {
+    ctx.drawImage(hut, xhut, yhut, 100, 100);
   }
   if (locked == 1) {
-    ctx.drawImage(key, xkey, ykey, 50, 50);
+    ctx.drawImage(key, xkey, ykey, 100, 100);
   }
   bullets.forEach((bullet) => {
     bullet.draw();
