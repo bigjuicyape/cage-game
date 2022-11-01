@@ -12,19 +12,11 @@ border: 1px solid rgb(255, 255, 255);
 border-radius: 2px;
 }
   
-/* From tom by tom */
-/* Switch starts here */
+
 .rocker {
     display: inline-block;
     position: relative;
-    /*
-    SIZE OF SWITCH
-    ==============
-    All sizes are in em - therefore
-    changing the font-size here
-    will change the size of the switch.
-    See .rocker-small below as example.
-    */
+
     font-size: 2em;
     font-weight: bold;
     text-align: center;
@@ -38,7 +30,7 @@ border-radius: 2px;
   
   .rocker-small {
     font-size: 0.75em;
-   /* Sizes the switch */
+
     margin: 1em;
   }
   
@@ -139,7 +131,6 @@ border-radius: 2px;
     background-color: #ccc;
   }
   
-  /* Keyboard Users */
   input:focus + .switch-left {
     color: #333;
   }

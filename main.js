@@ -6,15 +6,25 @@ let left = document.getElementById("left");
 let right = document.getElementById("right");
 let bg = document.getElementById("bg");
 let cage = document.getElementById("cage");
+let hut = document.getElementById("hut");
+let cage2 = document.getElementById("cageunlocked");
+let key = document.getElementById("key");
 let fireball = {
   i: document.getElementById("fireball"),
   w: 80,
   h: 50,
 };
+let background = 1;
+let locked = 1;
+let gold = 0;
 let vx = 0;
 let vy = 0;
+let xkey = 1680 * Math.random();
+let ykey = 850 * Math.random();
 let xcage = 450 * Math.random();
 let ycage = 450 * Math.random();
+let xhut = 450 * Math.random() + 200;
+let yhut = 700 * Math.random();
 let image = down;
 let bullets = [];
 let keydown = {
@@ -24,10 +34,12 @@ let keydown = {
   d: false,
 };
 let mouse = {};
-let fireballSound = new Audio("12-Gauge-Pump-Action-Shotgun (2).mp3");
+let fireballSound = new Audio("12-Gauge-Pump-Action-Shotgun.mp3");
+let creak = new Audio("creak.mp3");
+let cash = new Audio("cash.mp3");
 
-c.width = 600;
-c.height = 600;
+c.width = 1880;
+c.height = 970;
 
 let player = {
   x: c.width / 2 - 150 / 2,
@@ -116,21 +128,28 @@ class Bullet {
 }
 
 function reset() {
+  xkey = 1680 * Math.random();
+  ykey = 850 * Math.random();
   xcage = 450 * Math.random();
   ycage = 450 * Math.random();
+  xhut = 450 * Math.random();
+  yhut = 450 * Math.random();
 }
 
 function checkCollision() {
   if (player.x < -20) {
     player.x = -20;
+  } else if (player.x > c.width - 130 && gold > 1) {
+    player.x = 0;
+    background = 2;
   } else if (player.x > c.width - 130) {
     player.x = c.width - 130;
   }
 
-  if (player.y < 0) {
+  if (player.y <= 0) {
     player.y = 0;
-  } else if (player.y > c.height - 90) {
-    player.y = c.width - 90;
+  } else if (player.y >= 870) {
+    player.y = 870;
   }
 
   if (
@@ -146,15 +165,68 @@ function checkCollision() {
 
     let closest = Math.min(side1, side2, side3, side4);
 
-    if (side1 == closest) {
+    if (side1 == closest && background == 1) {
       player.x = xcage - 110;
-    } else if (side2 == closest) {
+      money();
+    } else if (side2 == closest && background == 1) {
       player.x = xcage + 150;
-    } else if (side3 == closest) {
+      money();
+    } else if (side3 == closest && background == 1) {
       player.y = ycage - 60;
-    } else if (side4 == closest) {
+      money();
+    } else if (side4 == closest && background == 1) {
       player.y = ycage + 185;
+      money();
     }
+  }
+}
+
+function checkCollisionHut() {
+  if (background == 2) {
+    if (
+      player.x + 110 > xhut &&
+      player.x < xhut + 150 &&
+      player.y + 60 > yhutxhut &&
+      player.y < yhutxhut + 185
+    ) {
+      let hutside1 = Math.abs(player.x + 110 - xhut);
+      let hutside2 = Math.abs(player.x - (xhut + 150));
+      let hutside3 = Math.abs(player.y + 60 - yhut);
+      let hutside4 = Math.abs(player.y - (yhut + 185));
+
+      let hutclosest = Math.min(side1, side2, side3, side4);
+
+      if (hutside1 == hutclosest && background == 2) {
+        player.x = xhut - 110;
+      } else if (hutside2 == hutclosest && background == 2) {
+        player.x = xhut + 150;
+      } else if (hutside3 == hutclosest && background == 2) {
+        player.y = yhut - 60;
+      } else if (hutside4 == hutclosest && background == 2) {
+        player.y = yhut + 185;
+      }
+    }
+  }
+}
+
+function checkCollisionkey() {
+  if (
+    player.x >= xkey - 50 &&
+    player.x <= xkey + 50 &&
+    player.y >= ykey - 50 &&
+    player.y <= ykey + 50 &&
+    locked == 1
+  ) {
+    document.getElementById("cage").src = "img/cage.png";
+    locked = 0;
+    creak.play();
+  }
+}
+function money() {
+  if (locked == 0) {
+    document.getElementById("cage").src = "img/cageplundered.png";
+    gold = 10;
+    cash.play();
   }
 }
 
@@ -192,12 +264,20 @@ function loop() {
 
   player.x += vx;
   player.y += vy;
-
   checkCollision();
+  checkCollisionkey();
+  checkCollisionHut();
 
   ctx.drawImage(image, player.x, player.y, player.w, player.h);
-  ctx.drawImage(cage, xcage, ycage, 200, 200);
-
+  if (background == 1) {
+    ctx.drawImage(cage, xcage, ycage, 200, 200);
+  }
+  if (background == 2) {
+    ctx.drawImage(hut, xhut, yhut, 200, 200);
+  }
+  if (locked == 1) {
+    ctx.drawImage(key, xkey, ykey, 50, 50);
+  }
   bullets.forEach((bullet) => {
     bullet.draw();
   });
