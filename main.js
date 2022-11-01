@@ -142,7 +142,7 @@ function reset() {
 function checkCollision() {
   if (player.x < -20) {
     player.x = -20;
-  } else if (player.x > c.width - 130 && gold > 1) {
+  } else if (player.x > c.width - 130 && gold > 1 && level) {
     player.x = 0;
     level = 2;
   } else if (player.x > c.width - 130) {
@@ -152,10 +152,12 @@ function checkCollision() {
   if (player.y <= 0) {
     player.y = 0;
   } else if (player.y >= 870 && level == 3) {
-    player.y = yhut + 90;
-    player.x = xhut + 25;
-    level = 2
-    background = bg
+    player.y = yhut + 101;
+    player.x = xhut;
+    level = 2;
+    background = bg;
+    player.w = 150;
+    player.h = 100;
   } else if (player.y >= 870) {
     player.y = 870;
   }
@@ -190,20 +192,26 @@ function checkCollision() {
 }
 
 function checkCollisionHut() {
-  if (level == 2 &&
-    player.x >= xhut - 50 - player.w / 2 &&
-    player.x <= xhut + 50 - player.w / 2 &&
-    player.y >= yhut - 50 - player.h / 2 &&
-    player.y <= yhut + 50 - player.h / 2) {      
-    player.x = c.width / 2 - 150 / 2,
-    player.y = 700
-    player.w = 200
-    player.h = 133
-    background = bg3
-    level = 3
-  }}
+  if (
+    level == 2 &&
+    player.x >= xhut - 100 &&
+    player.x <= xhut + 100 &&
+    player.y >= yhut - 100 &&
+    player.y <= yhut + 100
+  ) {
+    (player.x = c.width / 2 - 150 / 2), (player.y = 700);
+    player.w = 300;
+    player.h = 200;
+    background = bg3;
+    level = 3;
+  }
+}
 
-
+function shopitemgenerator() {
+  let odds = math.random;
+  if (odds <= 0.5) {
+  }
+}
 
 function checkCollisionkey() {
   if (
@@ -223,6 +231,7 @@ function money() {
     document.getElementById("cage").src = "img/cageplundered.png";
     gold = 10;
     cash.play();
+    document.getElementById("p").innerHTML = `you have ${gold} coins`;
   }
 }
 
@@ -254,7 +263,6 @@ function changeSpeed() {
 }
 function loop() {
   ctx.drawImage(background, 0, 0, c.width, c.height);
-
   changeSpeed();
 
   player.x += vx;
