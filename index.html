@@ -6,22 +6,20 @@
 <body>
 <h1>welcome to goblin brawler</h1>
 
-<img src="img/cage.png" id="cage" width="0">
-<img src="img/up.png" id="up" width="0">
-<img src="img/down.png" id="down" width="0">
-<img src="img/left.png" id="left" width="0">
-<img src="img/right.png" id="right" width="0">
-<img src="img/bg.png" id="bg" width="0">
-
-
+<img src="img/cage.png" id="cage" hidden>
+<img src="img/up.png" id="up" hidden>
+<img src="img/down.png" id="down" hidden>
+<img src="img/left.png" id="left" hidden>
+<img src="img/right.png" id="right" hidden>
+<img src="img/bg.png" id="bg" hidden>
+<img src="img/fireball.png" id="fireball" hidden>
 <canvas id="myCanvas"></canvas>
 <script src="main.js".js></script>
-<div></div>
-<button id="stop" onclick="reset()">reset
-</button>
 <div>
-<h1>press wasd</h1>
-</div>
-<img src="img/cage.png" id="cage" width="100">
+  <label class="rocker rocker-small">
+    <input type="checkbox" onclick="reset()">
+    <span class="switch-left"></span>
+    <span class="switch-right"></span>
+</label>
 </body>
 </html>
