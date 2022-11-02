@@ -11,11 +11,17 @@ let cage = document.getElementById("cage");
 let hut = document.getElementById("hut");
 let cage2 = document.getElementById("cageunlocked");
 let key = document.getElementById("key");
+let gun = document.getElementById("glock");
+let prompt = document.getElementById("prompt");
+let goldimg = document.getElementById("coins");
+let itemhidden = 200
+let fire = document.getElementById("fireball");
 let fireball = {
-  i: document.getElementById("fireball"),
+  i: fire,
   w: 80,
   h: 50,
 };
+let isitemcollected = 0
 let background = bg;
 let level = 1;
 let locked = 1;
@@ -130,19 +136,11 @@ class Bullet {
   }
 }
 
-function reset() {
-  xkey = 1680 * Math.random();
-  ykey = 850 * Math.random();
-  xcage = 450 * Math.random();
-  ycage = 450 * Math.random();
-  xhut = 450 * Math.random();
-  yhut = 450 * Math.random();
-}
 
 function checkCollision() {
   if (player.x < -20) {
     player.x = -20;
-  } else if (player.x > c.width - 130 && gold > 1 && level) {
+  } else if (player.x > c.width - 130 && gold > 1 && level == 1) {
     player.x = 0;
     level = 2;
   } else if (player.x > c.width - 130) {
@@ -206,12 +204,63 @@ function checkCollisionHut() {
     level = 3;
   }
 }
+let odds = Math.random();
+let goldodds = Math.random();
+let price = 0
 
 function shopitemgenerator() {
-  let odds = math.random;
   if (odds <= 0.5) {
+    shopitem = gun
+  } else {
+    shopitem = goldimg
   }
+  if (goldodds >= 0.5){
+    price = 8
+  } else {
+    price = 6
+  }
+  document.getElementById("prompt").innerHTML = `${price}$`
 }
+
+
+function checkCollisionitem() {
+if( 
+  player.x >= 200 - 50 &&
+  player.x <= 200 + 50 &&
+  player.y >= 200 - 50 &&
+  player.y <= 200 + 50 &&
+  isitemcollected == 0)
+{
+isitemcollected = 1;
+itemhidden = 0;
+} if (isitemcollected == 1 && shopitem == goldimg && level == 3){
+gold = gold + price;
+cash.play();
+    document.getElementById("p").innerHTML = `you have ${gold} coins`;
+    document.getElementById("prompt").innerHTML = ""
+} 
+if (isitemcollected == 1 && shopitem == goldimg && level == 3){
+gold = gold + price;
+cash.play();
+document.getElementById("p").innerHTML = `you have ${gold} coins`;
+document.getElementById("prompt").innerHTML = ""
+} 
+if (isitemcollected == 1 && shopitem == goldimg && level == 3){
+  gold = gold - price;
+  fireball.i = document.getElementById("glock");
+  cash.play();
+  document.getElementById("prompt").innerHTML = ""
+    document.getElementById("p").innerHTML = `you have ${gold} coins`;
+} if (isitemcollected == 1 && shopitem == goldimg && level == 3){
+  gold = gold - price;
+  fireball.i = document.getElementById("glock");
+  cash.play();
+  document.getElementById("prompt").innerHTML = ""
+    document.getElementById("p").innerHTML = `you have ${gold} coins`;
+}
+}
+
+
 
 function checkCollisionkey() {
   if (
@@ -264,13 +313,16 @@ function changeSpeed() {
 function loop() {
   ctx.drawImage(background, 0, 0, c.width, c.height);
   changeSpeed();
-
   player.x += vx;
   player.y += vy;
   checkCollision();
   checkCollisionkey();
   checkCollisionHut();
-
+  if (level == 3) {
+    shopitemgenerator()
+    ctx.drawImage(shopitem, 200, 200, itemhidden, 200);
+    checkCollisionitem()
+   }
   ctx.drawImage(image, player.x, player.y, player.w, player.h);
   if (level == 1) {
     ctx.drawImage(cage, xcage, ycage, 200, 200);
