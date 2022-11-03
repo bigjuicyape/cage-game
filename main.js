@@ -14,14 +14,14 @@ let key = document.getElementById("key");
 let gun = document.getElementById("glock");
 let prompt = document.getElementById("prompt");
 let goldimg = document.getElementById("coins");
-let itemhidden = 200
+let itemhidden = 200;
 let fire = document.getElementById("fireball");
-let fireball = {
+let projectile = {
   i: fire,
   w: 80,
   h: 50,
 };
-let isitemcollected = 0
+let isitemcollected = 0;
 let background = bg;
 let level = 1;
 let locked = 1;
@@ -43,7 +43,7 @@ let keydown = {
   d: false,
 };
 let mouse = {};
-let fireballSound = new Audio("12-Gauge-Pump-Action-Shotgun.mp3");
+let projectileSound = new Audio("12-Gauge-Pump-Action-Shotgun.mp3");
 let creak = new Audio("creak.mp3");
 let cash = new Audio("cash.mp3");
 
@@ -55,6 +55,7 @@ let player = {
   y: c.height / 2 - 100 / 2,
   w: 150,
   h: 100,
+  speed: 3,
 };
 
 document.addEventListener("keydown", keydownHandler);
@@ -82,20 +83,20 @@ function clickHandler(event) {
 
 class Bullet {
   constructor() {
-    this.x = player.x + (player.w - fireball.w) / 2;
-    this.y = player.y + (player.h - fireball.h) / 2;
+    this.x = player.x + (player.w - projectile.w) / 2;
+    this.y = player.y + (player.h - projectile.h) / 2;
     this.speed = 5;
 
     this.getVelocity();
 
     bullets.push(this);
 
-    fireballSound.play();
+    projectileSound.play();
   }
 
   getVelocity() {
-    let dx = mouse.x - this.x - fireball.w / 2;
-    let dy = mouse.y - this.y - fireball.h / 2;
+    let dx = mouse.x - this.x - projectile.w / 2;
+    let dy = mouse.y - this.y - projectile.h / 2;
 
     let length = Math.sqrt(dx ** 2 + dy ** 2);
 
@@ -114,28 +115,27 @@ class Bullet {
     this.y += this.vy;
 
     ctx.save();
-    ctx.translate(this.x + fireball.w / 2, this.y + fireball.h / 2);
+    ctx.translate(this.x + projectile.w / 2, this.y + projectile.h / 2);
     ctx.rotate(this.angle * (Math.PI / 180));
     ctx.drawImage(
-      fireball.i,
-      -fireball.w / 2,
-      -fireball.h / 2,
-      fireball.w,
-      fireball.h
+      projectile.i,
+      -projectile.w / 2,
+      -projectile.h / 2,
+      projectile.w,
+      projectile.h
     );
     ctx.restore();
 
     if (
       this.x > c.width ||
-      this.x + fireball.w < 0 ||
+      this.x + projectile.w < 0 ||
       this.y > c.height ||
-      this.y + fireball.h < 0
+      this.y + projectile.h < 0
     ) {
       bullets.splice(bullets.indexOf(this), 1);
     }
   }
 }
-
 
 function checkCollision() {
   if (player.x < -20) {
@@ -206,61 +206,53 @@ function checkCollisionHut() {
 }
 let odds = Math.random();
 let goldodds = Math.random();
-let price = 0
+let price = 0;
 
 function shopitemgenerator() {
-  if (odds <= 0.5) {
-    shopitem = gun
-  } else {
-    shopitem = goldimg
+  if (odds < 0.5) {
+    shopitem = gun;
+  } else if (odds >= 0.5) {
+    shopitem = goldimg;
   }
-  if (goldodds >= 0.5){
-    price = 8
+  if (goldodds > 0.5) {
+    price = 8;
   } else {
-    price = 6
+    price = 6;
   }
-  document.getElementById("prompt").innerHTML = `${price}$`
+  document.getElementById("prompt").innerHTML = `${price}$`;
 }
-
-
+let stop = 0;
 function checkCollisionitem() {
-if( 
-  player.x >= 200 - 50 &&
-  player.x <= 200 + 50 &&
-  player.y >= 200 - 50 &&
-  player.y <= 200 + 50 &&
-  isitemcollected == 0)
-{
-isitemcollected = 1;
-itemhidden = 0;
-} if (isitemcollected == 1 && shopitem == goldimg && level == 3){
-gold = gold + price;
-cash.play();
-    document.getElementById("p").innerHTML = `you have ${gold} coins`;
-    document.getElementById("prompt").innerHTML = ""
-} 
-if (isitemcollected == 1 && shopitem == goldimg && level == 3){
-gold = gold + price;
-cash.play();
-document.getElementById("p").innerHTML = `you have ${gold} coins`;
-document.getElementById("prompt").innerHTML = ""
-} 
-if (isitemcollected == 1 && shopitem == goldimg && level == 3){
-  gold = gold - price;
-  fireball.i = document.getElementById("glock");
-  cash.play();
-  document.getElementById("prompt").innerHTML = ""
-    document.getElementById("p").innerHTML = `you have ${gold} coins`;
-} if (isitemcollected == 1 && shopitem == goldimg && level == 3){
-  gold = gold - price;
-  fireball.i = document.getElementById("glock");
-  cash.play();
-  document.getElementById("prompt").innerHTML = ""
-    document.getElementById("p").innerHTML = `you have ${gold} coins`;
+  if (
+    player.x >= 200 - 50 &&
+    player.x <= 200 + 50 &&
+    player.y >= 200 - 50 &&
+    player.y <= 200 + 50 &&
+    isitemcollected == 0
+  ) {
+    isitemcollected = 1;
+    itemhidden = 0;
+  }
+  if (isitemcollected == 1 && shopitem == goldimg && level == 3 && stop == 0) {
+    gold = gold + price;
+    cash.play();
+    document.getElementById("p").innerHTML = gold;
+    document.getElementById("prompt").innerHTML = " ";
+    stop = 1;
+  } else if (
+    isitemcollected == 1 &&
+    shopitem == gun &&
+    level == 3 &&
+    stop == 0
+  ) {
+    gold = gold - price;
+    projectile.i = document.getElementById("glock");
+    cash.play();
+    document.getElementById("prompt").innerHTML = "";
+    document.getElementById("p").innerHTML = gold;
+    stop = 1;
+  }
 }
-}
-
-
 
 function checkCollisionkey() {
   if (
@@ -286,20 +278,20 @@ function money() {
 
 function changeSpeed() {
   if (keydown.a) {
-    vx = -4;
+    vx = -player.speed;
     image = left;
   } else if (keydown.d) {
-    vx = 4;
+    vx = player.speed;
     image = right;
   } else {
     vx = 0;
   }
 
   if (keydown.w) {
-    vy = -4;
+    vy = -player.speed;
     image = up;
   } else if (keydown.s) {
-    vy = 4;
+    vy = player.speed;
     image = down;
   } else {
     vy = 0;
@@ -319,10 +311,10 @@ function loop() {
   checkCollisionkey();
   checkCollisionHut();
   if (level == 3) {
-    shopitemgenerator()
+    shopitemgenerator();
     ctx.drawImage(shopitem, 200, 200, itemhidden, 200);
-    checkCollisionitem()
-   }
+    checkCollisionitem();
+  }
   ctx.drawImage(image, player.x, player.y, player.w, player.h);
   if (level == 1) {
     ctx.drawImage(cage, xcage, ycage, 200, 200);
