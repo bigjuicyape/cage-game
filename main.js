@@ -12,6 +12,7 @@ let hut = document.getElementById("hut");
 let cage2 = document.getElementById("cageunlocked");
 let key = document.getElementById("key");
 let gun = document.getElementById("glock");
+let crocs = document.getElementById("crocs");
 let prompt = document.getElementById("prompt");
 let goldimg = document.getElementById("coins");
 let itemhidden = 200;
@@ -21,6 +22,7 @@ let projectile = {
   w: 80,
   h: 50,
 };
+let iscrocs = 0
 let isitemcollected = 0;
 let background = bg;
 let level = 1;
@@ -55,7 +57,7 @@ let player = {
   y: c.height / 2 - 100 / 2,
   w: 150,
   h: 100,
-  speed: 3,
+  speed: 7,
 };
 
 document.addEventListener("keydown", keydownHandler);
@@ -137,16 +139,27 @@ class Bullet {
   }
 }
 
+
 function checkCollision() {
   if (player.x < -20) {
     player.x = -20;
-  } else if (player.x > c.width - 130 && gold > 1 && level == 1) {
+  } else if (player.x > c.width - 130 && level == 1) {
     player.x = 0;
     level = 2;
   } else if (player.x > c.width - 130) {
     player.x = c.width - 130;
+  } 
+  if (player.x >= c.width - 130 && level == 2) {
+    player.x = 0;
+    background = bg4;
+    level = 4
   }
-
+  else if (player.x >= c.width - 130 && level == 4 || 
+    player.x >= c.width - 130 && level == 5){
+    level = level + 1
+    player.x = 0;
+    background = bg4;
+    }
   if (player.y <= 0) {
     player.y = 0;
   } else if (player.y >= 870 && level == 3) {
@@ -156,10 +169,10 @@ function checkCollision() {
     background = bg;
     player.w = 150;
     player.h = 100;
+    player.speed = player.speed/2;
   } else if (player.y >= 870) {
     player.y = 870;
-  }
-
+  } 
   if (
     player.x + 110 > xcage &&
     player.x < xcage + 150 &&
@@ -197,11 +210,11 @@ function checkCollisionHut() {
     player.y >= yhut - 100 &&
     player.y <= yhut + 100
   ) {
-    (player.x = c.width / 2 - 150 / 2), (player.y = 700);
     player.w = 300;
     player.h = 200;
     background = bg3;
     level = 3;
+    player.speed = player.speed + player.speed
   }
 }
 let odds = Math.random();
@@ -228,7 +241,8 @@ function checkCollisionitem() {
     player.x <= 200 + 50 &&
     player.y >= 200 - 50 &&
     player.y <= 200 + 50 &&
-    isitemcollected == 0
+    isitemcollected == 0 &&
+    gold >= price
   ) {
     isitemcollected = 1;
     itemhidden = 0;
@@ -248,7 +262,7 @@ function checkCollisionitem() {
     gold = gold - price;
     projectile.i = document.getElementById("glock");
     cash.play();
-    document.getElementById("prompt").innerHTML = "";
+    document.getElementById("prompt").innerHTML = " ";
     document.getElementById("p").innerHTML = gold;
     stop = 1;
   }
@@ -302,14 +316,45 @@ function changeSpeed() {
     vy += -Math.sign(vy) * Math.sqrt(2);
   }
 }
+
+function checkCollisionwall()
+{if (player.y <= c.width / 2 -50 && level == 4 || 
+player.y <= c.width / 2 -50 && level == 5 || 
+player.y <= c.width / 2 -50 && level == 6) 
+{
+player.y = c.width / 2 - 50;
+} if (player.y <= c.width / 2 -50 && level == 5 || 
+player.y <= c.width / 2 -50 && level == 6) 
+{
+player.y = c.width / 2 - 50;
+}
+}
+
+function checkCollisioncrocs() {
+  if (player.x >= c.width / 2 - 50 &&
+    player.x <= c.width / 2 + 50 &&
+    player.y >= 700 - 50 &&
+    player.y <= 700 + 50 &&
+    level == 6 && gold >= 5 && iscrocs == 0){
+      player.speed = player.speed + player.speed
+      crocshidden = 0
+      gold = gold - 5
+      iscrocs = 1
+  }
+}
+
+crocshidden = 100
+
 function loop() {
   ctx.drawImage(background, 0, 0, c.width, c.height);
   changeSpeed();
   player.x += vx;
   player.y += vy;
   checkCollision();
+  checkCollisionwall();
   checkCollisionkey();
   checkCollisionHut();
+  checkCollisioncrocs();
   if (level == 3) {
     shopitemgenerator();
     ctx.drawImage(shopitem, 200, 200, itemhidden, 200);
@@ -322,8 +367,10 @@ function loop() {
   if (level == 2) {
     ctx.drawImage(hut, xhut, yhut, 100, 100);
   }
-  if (locked == 1) {
+  if (locked == 1 && level == 1) {
     ctx.drawImage(key, xkey, ykey, 100, 100);
+  } if (level == 6) {
+    ctx.drawImage(crocs, c.width / 2 - 50, 700, 100, crocshidden);
   }
   bullets.forEach((bullet) => {
     bullet.draw();
