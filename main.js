@@ -17,14 +17,21 @@ let crocs = document.getElementById("crocs");
 let cageend = document.getElementById("cagetrap");
 let levelel = document.getElementById("p2");
 let goldimg = document.getElementById("coins");
+let bosswalk1 = document.getElementById("bosswalk1");
+let bosswalk2 = document.getElementById("bosswalk2");
+let bosspunch1 = document.getElementById("bossattack1");
+let bosspunch2 = document.getElementById("bossattack2");
 let itemhidden = 200;
 let bulletspeed = 3;
+let bossspawn = 0
 let fire = document.getElementById("fireball");
 let projectile = {
   i: fire,
   w: 80,
   h: 50,
 };
+let bossx = -400
+let bossy = c.height / 2 - 400 / 2
 let goblinalive = 1
 let iscrocs = 0
 let isitemcollected = 0;
@@ -34,12 +41,12 @@ let locked = 1;
 let gold = 0;
 let vx = 0;
 let vy = 0;
-let xkey = 900 * Math.random();
-let ykey = 850 * Math.random();
-let xcage = 450 * Math.random();
-let ycage = 450 * Math.random();
-let xhut = 450 * Math.random() + 200;
-let yhut = 700 * Math.random();
+let xkey = 200 + 500 * Math.random();
+let ykey = 600 + 300 * Math.random();
+let xcage = 800 * Math.random();
+let ycage = 300 * Math.random();
+let xhut = 700 * Math.random() + 200;
+let yhut = 300 * Math.random();
 let image = down;
 let bullets = [];
 let keydown = {
@@ -52,6 +59,10 @@ let mouse = {};
 let projectileSound = new Audio("12-Gauge-Pump-Action-Shotgun.mp3");
 let creak = new Audio("creak.mp3");
 let cash = new Audio("cash.mp3");
+let approaching = new Audio("approaching boss.mp3");
+let approaching2 = new Audio("approaching boss 2.mp3");
+let bosssteps = new Audio("boss steps.mp3");
+let bossbattle = new Audio("boss battle.mp3");
 
 c.width = 970;
 c.height = 970;
@@ -260,7 +271,6 @@ function checkCollisionHut() {
     player.speed = player.speed + player.speed
   }
 
-
 }
 let odds = Math.random();
 let goldodds = Math.random();
@@ -394,9 +404,9 @@ let trapped = 0
 function cagetrap() {
 if (level == 7) {
 if (
-  trapped == 0 && player.x >= 750 &&
+  trapped == 0 && player.x >= 650 &&
   player.y >= c.height / 2 - 200 && 
-  player.y <= c.height / 2){
+  player.y <= c.height / 2 + 100){
 trapped = 1
 player.x = 750;
 player.y = c.height / 2 - 50;
@@ -405,31 +415,56 @@ if ( trapped == 1) {
 player.x = cagex + 30
 player.y = cagey + 50
 } 
-// if ( trapped == 1 && player.x > cagex + 50) {
-//   player.x = cagex + 50
-//   } 
-// if ( trapped == 1 && player.y > cagey - 200) {
-//   player.y = cagex -200
-// }
-// if ( trapped == 1 && player.y < cagey - 10){
-//   player.y = cagex - 10
-// }
 }
 }
+
+
+function phase1(){
+  bossspawn = 1
+  bossx = bossx + 1;
+  phase = 1
+  bosssteps.play();
+  shake = Math.random() * -40
+  shake = Math.random() * 40
+  player.x = player.x + shake
+  player.y = player.y + shake
+}
+
+function halfphase(){
+  phase = 2/4
+  approaching2.play();
+  bossbattle.play();
+  shake = Math.random() * -20
+  shake = Math.random() * 20
+  player.x = player.x + shake
+  player.y = player.y + shake
+  setTimeout(phase1, 5000)
+  }
+  
+function quarterphase(){
+phase = 1/4
+approaching.play();
+shake = Math.random() * -10
+shake = Math.random() * 10
+player.x = player.x + shake
+player.y = player.y + shake
+setTimeout(halfphase, 5000)
+}
+
 let cagex = 750
 let cagey = c.height / 2 - 100
 let shake = 0
+let phase = 0
 function loop() {
   cagex = 750 + shake
   cagey = c.height / 2 - 100 + shake
-  if (trapped == 1){
-    shake = Math.random() * 40
-    shake = Math.random() * -40
+  if (trapped == 1 && phase == 0){
     player.x = player.x + shake
     player.y = player.y + shake
-  } else {
-    shake = 0
-  }
+    shake = Math.random() * -3
+    shake = Math.random() * 3
+    setTimeout(quarterphase, 5000)
+    }
   ctx.drawImage(background, shake, shake, c.width, c.height);
   changeSpeed();
   player.x += vx + shake;
@@ -445,6 +480,9 @@ function loop() {
     shopitemgenerator();
     ctx.drawImage(shopitem, 200, 200, itemhidden, 200);
     checkCollisionitem();
+  }
+  if (bossspawn == 1){
+    ctx.drawImage(bosswalk1, bossx, bossy, 500, 500);
   }
   ctx.drawImage(image, player.x, player.y, player.w, player.h);
   if (level == 1) {
