@@ -5,6 +5,7 @@ let down = document.getElementById("down");
 let left = document.getElementById("left");
 let right = document.getElementById("right");
 let bg = document.getElementById("bg");
+let bg7 = document.getElementById("bg7");
 let bg3 = document.getElementById("bg3");
 let bg4 = document.getElementById("bg4");
 let cage = document.getElementById("cage");
@@ -14,15 +15,17 @@ let key = document.getElementById("key");
 let gun = document.getElementById("glock");
 let crocs = document.getElementById("crocs");
 let cageend = document.getElementById("cagetrap");
-let levelp = document.getElementById("level");
+let levelel = document.getElementById("p2");
 let goldimg = document.getElementById("coins");
 let itemhidden = 200;
+let bulletspeed = 3;
 let fire = document.getElementById("fireball");
 let projectile = {
   i: fire,
   w: 80,
   h: 50,
 };
+let goblinalive = 1
 let iscrocs = 0
 let isitemcollected = 0;
 let background = bg;
@@ -58,7 +61,7 @@ let player = {
   y: c.height / 2 - 100 / 2,
   w: 150,
   h: 100,
-  speed: 3,
+  speed: 7,
 };
 
 document.addEventListener("keydown", keydownHandler);
@@ -83,12 +86,11 @@ function clickHandler(event) {
 
   new Bullet();
 }
-
 class Bullet {
   constructor() {
     this.x = player.x + (player.w - projectile.w) / 2;
     this.y = player.y + (player.h - projectile.h) / 2;
-    this.speed = 5;
+    this.speed = bulletspeed;
 
     this.getVelocity();
 
@@ -141,6 +143,7 @@ class Bullet {
 }
 
 function changelevel() {
+  document.getElementById("p2").innerHTML = `level ${level}`
   // going to the next level
   if (player.x > c.width - 130 && level == 1) {
     player.x = 0;
@@ -168,8 +171,8 @@ function changelevel() {
   }
   if (player.x >= c.width - 130 && level == 6) {
     player.x = 0;
-    background = bg;
-    level = 7
+    background = bg7;
+    level = 7;
   }
   // going back
   if (level == 2 && player.x <= -19){
@@ -179,33 +182,26 @@ function changelevel() {
   }
   if (level == 4 && player.x <= -19){
     player.x = c.width - 130;
-    background = bg
+    background = bg;
     level = 2
   }
   if (level == 5 && player.x <= -19){
     player.x = c.width - 130;
-    background = bg4
-    level = 4
+    background = bg4;
+    level = 4;
   }
   if (level == 6 && player.x <= -19){
     player.x = c.width - 130;
-    background = bg4
-    level = 5
+    background = bg4;
+    level = 5;
   }
   if (level == 7 && player.x <= -19){
     player.x = c.width - 130;
-    background = bg4
-    level = 6
+    background = bg4;
+    level = 6;
   }
 }
-// needs work
-trapped = 0
-function cagetrap() {
-if (trapped = 0 && player.x >= 750 && player.y <= c.height / 2 - 200 && player.y >= c.height / 2 && level == 7){
-trapped = 1
-alert("e")
-}
-}
+
 
 
 function checkCollision() {
@@ -285,10 +281,10 @@ function shopitemgenerator() {
 let stop = 0;
 function checkCollisionitem() {
   if (
-    player.x >= 200 - 50 &&
-    player.x <= 200 + 50 &&
-    player.y >= 200 - 50 &&
-    player.y <= 200 + 50 &&
+    player.x >= 200 - 100 &&
+    player.x <= 200 + 100 &&
+    player.y >= 200 - 100 &&
+    player.y <= 200 + 100 &&
     isitemcollected == 0 &&
     gold >= price
   ) {
@@ -308,6 +304,7 @@ function checkCollisionitem() {
   ) {
     gold = gold - price;
     projectile.i = document.getElementById("glock");
+    bulletspeed = 6
     cash.play();
     document.getElementById("p").innerHTML = `${gold}$`;
     stop = 1;
@@ -320,19 +317,22 @@ function checkCollisionkey() {
     player.x <= xkey + 50 &&
     player.y >= ykey - 50 &&
     player.y <= ykey + 50 &&
-    locked == 1
+    locked == 1 &&
+    level == 1
   ) {
     document.getElementById("cage").src = "img/cage.png";
     locked = 0;
     creak.play();
   }
 }
+looted = 0
 function money() {
-  if (locked == 0) {
+  if (locked == 0 && looted == 0) {
     document.getElementById("cage").src = "img/cageplundered.png";
     gold = 10;
     cash.play();
     document.getElementById("p").innerHTML = `${gold}$`;
+    looted = 1
   }
 }
 
@@ -390,12 +390,50 @@ function checkCollisioncrocs() {
 
 crocshidden = 100
 
+let trapped = 0
+function cagetrap() {
+if (level == 7) {
+if (
+  trapped == 0 && player.x >= 750 &&
+  player.y >= c.height / 2 - 200 && 
+  player.y <= c.height / 2){
+trapped = 1
+player.x = 750;
+player.y = c.height / 2 - 50;
+}
+if ( trapped == 1) {
+player.x = cagex + 30
+player.y = cagey + 50
+} 
+// if ( trapped == 1 && player.x > cagex + 50) {
+//   player.x = cagex + 50
+//   } 
+// if ( trapped == 1 && player.y > cagey - 200) {
+//   player.y = cagex -200
+// }
+// if ( trapped == 1 && player.y < cagey - 10){
+//   player.y = cagex - 10
+// }
+}
+}
+let cagex = 750
+let cagey = c.height / 2 - 100
+let shake = 0
 function loop() {
-  ctx.drawImage(background, 0, 0, c.width, c.height);
+  cagex = 750 + shake
+  cagey = c.height / 2 - 100 + shake
+  if (trapped == 1){
+    shake = Math.random() * 40
+    shake = Math.random() * -40
+    player.x = player.x + shake
+    player.y = player.y + shake
+  } else {
+    shake = 0
+  }
+  ctx.drawImage(background, shake, shake, c.width, c.height);
   changeSpeed();
-  player.x += vx;
-  player.y += vy;
-// make it update level text
+  player.x += vx + shake;
+  player.y += vy + shake;
   changelevel()
   checkCollision();
   checkCollisionwall();
@@ -420,7 +458,7 @@ function loop() {
   } if (level == 6) {
     ctx.drawImage(crocs, c.width / 2 - 50, 700, 100, crocshidden);
   } if (level == 7) {
-    ctx.drawImage(cageend, 750, c.height / 2 - 100, 200, 200);
+    ctx.drawImage(cageend, cagex, cagey, 200, 200);
   }
   bullets.forEach((bullet) => {
     bullet.draw();
