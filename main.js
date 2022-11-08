@@ -63,6 +63,8 @@ let approaching = new Audio("approaching boss.mp3");
 let approaching2 = new Audio("approaching boss 2.mp3");
 let bosssteps = new Audio("boss steps.mp3");
 let bossbattle = new Audio("boss battle.mp3");
+let song = new Audio("Wet Hands.mp3");
+let musicplay = 1
 
 c.width = 970;
 c.height = 970;
@@ -72,8 +74,17 @@ let player = {
   y: c.height / 2 - 100 / 2,
   w: 150,
   h: 100,
-  speed: 7,
+  speed: 3,
 };
+
+
+function music(){
+  if(musicplay == 1){
+song.play();  
+}
+}
+
+
 
 document.addEventListener("keydown", keydownHandler);
 document.addEventListener("keyup", keyupHandler);
@@ -419,6 +430,8 @@ player.y = cagey + 50
 }
 
 
+
+
 function phase1(){
   bossspawn = 1
   bossx = bossx + 1;
@@ -455,6 +468,8 @@ let cagex = 750
 let cagey = c.height / 2 - 100
 let shake = 0
 let phase = 0
+
+
 function loop() {
   cagex = 750 + shake
   cagey = c.height / 2 - 100 + shake
@@ -464,25 +479,29 @@ function loop() {
     shake = Math.random() * -3
     shake = Math.random() * 3
     setTimeout(quarterphase, 5000)
+    song.pause();
+    song.currentTime = 0;
+    musicplay = 0
     }
   ctx.drawImage(background, shake, shake, c.width, c.height);
-  changeSpeed();
+  changeSpeed()
   player.x += vx + shake;
   player.y += vy + shake;
   changelevel()
-  checkCollision();
-  checkCollisionwall();
-  checkCollisionkey();
-  checkCollisionHut();
-  checkCollisioncrocs();
-  cagetrap();
+  music()
+  checkCollision()
+  checkCollisionwall()
+  checkCollisionkey()
+  checkCollisionHut()
+  checkCollisioncrocs()
+  cagetrap()
   if (level == 3) {
     shopitemgenerator();
     ctx.drawImage(shopitem, 200, 200, itemhidden, 200);
     checkCollisionitem();
   }
   if (bossspawn == 1){
-    ctx.drawImage(bosswalk1, bossx, bossy, 500, 500);
+  ctx.drawImage(bosswalk1, bossx, c.height / 2 - 175, 500, 500);
   }
   ctx.drawImage(image, player.x, player.y, player.w, player.h);
   if (level == 1) {
