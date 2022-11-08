@@ -24,6 +24,7 @@ let bosspunch2 = document.getElementById("bossattack2");
 let itemhidden = 200;
 let bulletspeed = 3;
 let bossspawn = 0
+let spritesheet = document.getElementById("spritesheet");
 let fire = document.getElementById("fireball");
 let projectile = {
   i: fire,
@@ -68,6 +69,10 @@ let musicplay = 1
 
 c.width = 970;
 c.height = 970;
+// function test(){
+// // ctx.drawImage(spritesheet, 0, 0, 500, 500, 0, 0, c.width, c.height)
+// // requestAnimationFrame(test)
+// // }
 
 let player = {
   x: c.width / 2 - 150 / 2,
@@ -76,14 +81,6 @@ let player = {
   h: 100,
   speed: 3,
 };
-
-
-function music(){
-  if(musicplay == 1){
-song.play();  
-}
-}
-
 
 
 document.addEventListener("keydown", keydownHandler);
@@ -432,10 +429,16 @@ player.y = cagey + 50
 
 
 
+// ctx.drawImage(spritesheet, bossx, c.height / 2 - 175, 500, 500)
+function bossanimate(){
+
+}
+
+
 function phase1(){
-  bossspawn = 1
+  bossanimate();
   bossx = bossx + 1;
-  phase = 1
+  phase = 1 ;
   bosssteps.play();
   shake = Math.random() * -40
   shake = Math.random() * 40
@@ -471,6 +474,8 @@ let phase = 0
 
 
 function loop() {
+  // setTimeout(test, 1000)
+// document.addEventListener("click", song.play())
   cagex = 750 + shake
   cagey = c.height / 2 - 100 + shake
   if (trapped == 1 && phase == 0){
@@ -488,7 +493,6 @@ function loop() {
   player.x += vx + shake;
   player.y += vy + shake;
   changelevel()
-  music()
   checkCollision()
   checkCollisionwall()
   checkCollisionkey()
@@ -499,9 +503,6 @@ function loop() {
     shopitemgenerator();
     ctx.drawImage(shopitem, 200, 200, itemhidden, 200);
     checkCollisionitem();
-  }
-  if (bossspawn == 1){
-  ctx.drawImage(bosswalk1, bossx, c.height / 2 - 175, 500, 500);
   }
   ctx.drawImage(image, player.x, player.y, player.w, player.h);
   if (level == 1) {
