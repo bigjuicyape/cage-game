@@ -1,0 +1,13 @@
+html{
+background-color: rgb(26, 14, 41);
+}
+
+h1{
+color: white;
+}
+
+body {text-align: center;}
+canvas {
+border: 1px solid rgb(255, 255, 255);
+border-radius: 2px;
+}
