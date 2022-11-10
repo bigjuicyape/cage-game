@@ -69,17 +69,14 @@ let musicplay = 1
 
 c.width = 970;
 c.height = 970;
-// function test(){
-// // ctx.drawImage(spritesheet, 0, 0, 500, 500, 0, 0, c.width, c.height)
-// // requestAnimationFrame(test)
-// // }
+
 
 let player = {
   x: c.width / 2 - 150 / 2,
   y: c.height / 2 - 100 / 2,
   w: 150,
   h: 100,
-  speed: 3,
+  speed: 7,
 };
 
 
@@ -429,14 +426,11 @@ player.y = cagey + 50
 
 
 
-// ctx.drawImage(spritesheet, bossx, c.height / 2 - 175, 500, 500)
-function bossanimate(){
 
-}
+
 
 
 function phase1(){
-  bossanimate();
   bossx = bossx + 1;
   phase = 1 ;
   bosssteps.play();
@@ -444,6 +438,7 @@ function phase1(){
   shake = Math.random() * 40
   player.x = player.x + shake
   player.y = player.y + shake
+  requestAnimationFrame(phase1)
 }
 
 function halfphase(){
@@ -474,10 +469,12 @@ let phase = 0
 
 
 function loop() {
-  // setTimeout(test, 1000)
-// document.addEventListener("click", song.play())
+document.addEventListener("click", song.play())
   cagex = 750 + shake
   cagey = c.height / 2 - 100 + shake
+  if (phase == 1){
+    ctx.drawImage(bosswalk1, bossx, c.height / 2 - 175, 500, 500)
+  }
   if (trapped == 1 && phase == 0){
     player.x = player.x + shake
     player.y = player.y + shake
