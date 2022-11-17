@@ -5,9 +5,10 @@ let down = document.getElementById("down");
 let left = document.getElementById("left");
 let right = document.getElementById("right");
 let bg = document.getElementById("bg");
-let bg3 = document.getElementById("bg3");
-let bg4 = document.getElementById("bg4");
+let shop = document.getElementById("bg3");
+let wall = document.getElementById("bg4");
 let imgcage = document.getElementById("cage");
+let imghut = document.getElementById("hut");
 let spritesheet = document.getElementById("spritesheetboss");
 let spritesheet2 = document.getElementById("spritesheetboss2");
 
@@ -85,6 +86,17 @@ let cage = {
   type: "cage",
   draw: function () {
     ctx.drawImage(this.i, this.x, this.y, this.w, this.h);
+  },
+};
+let hut = {
+  x: 650 + 100 * Math.random(),
+  y: 450 * Math.random(),
+  w: 200,
+  h: 225,
+  i: imghut,
+  type: "hut",
+  draw: function () {
+    ctx.drawImage(this.i, this.x, this.y, this.w, this.h)
   },
 };
 
@@ -170,9 +182,9 @@ class Enemy {
   constructor(x, y) {
     this.x = x;
     this.y = y;
-    this.w = 60;
-    this.h = 60;
-    this.speed = 1.5;
+    this.w = 30;
+    this.h = 30;
+    this.speed = 1.75;
     this.type = "enemy";
 
     collisionObjects.push(this);
@@ -193,14 +205,14 @@ class Enemy {
 
     this.move();
     if (this.y >= player.y + 50) {
-      ctx.drawImage(spritesheet, Math.floor(((8 / 80) * frameCount) % 8) * 164, 164, 164, 164, this.x, this.y, this.w, this.h);
+      ctx.drawImage(spritesheet, Math.floor((((8) / 20) * frameCount) % 8) * 164, 164, 164, 164, this.x, this.y, this.w, this.h);
     } else if (this.y <= player.y - 50) {
-      ctx.drawImage(spritesheet, Math.floor(((8 / 80) * frameCount) % 8) * 164, 0, 164, 164, this.x, this.y, this.w, this.h);
+      ctx.drawImage(spritesheet, Math.floor((((8) / 20) * frameCount) % 8) * 164, 0, 164, 164, this.x, this.y, this.w, this.h);
     } else {
       if (this.x >= player.x) {
-        ctx.drawImage(spritesheet, Math.floor(((8 / 80) * frameCount) % 8) * 164, 492, 164, 164, this.x, this.y, this.w, this.h);
+        ctx.drawImage(spritesheet, Math.floor((((8) / 20) * frameCount) % 8) * 164, 492, 164, 164, this.x, this.y, this.w, this.h);
       } else {
-        ctx.drawImage(spritesheet, Math.floor(((8 / 80) * frameCount) % 8) * 164, 328, 164, 164, this.x, this.y, this.w, this.h);
+        ctx.drawImage(spritesheet, Math.floor((((8) / 20) * frameCount) % 8) * 164, 328, 164, 164, this.x, this.y, this.w, this.h);
       }
     }
   }
@@ -217,7 +229,11 @@ function checkCollision(thisObject) {
     if (thisObject.y < 0) {
       thisObject.y = 0;
     }
-    if (thisObject.y > c.height - thisObject.h) {
+    if (player.y > c.height - thisObject.h && background == shop) {
+      thisObject.y = hut.y + hut.h ;
+      thisObject.x = hut.x + (hut.w / 2) - (thisObject.w / 2) ;
+      background = bg;
+    } if (thisObject.y > c.height - thisObject.h) {
       thisObject.y = c.height - thisObject.h;
     }
   }
@@ -250,29 +266,44 @@ function checkCollision(thisObject) {
         thisObject.x = colObj.x + colObj.w;
       } else if (side3 == closest) {
         thisObject.y = colObj.y - thisObject.h;
-      } else if (side4 == closest) {
+      } else if (side4 == closest && colObj.type == "hut" && thisObject.type == "player") {
+        thisObject.y = c.height - thisObject.h
+        thisObject.x = c.width / 2 - thisObject.w / 2
+        background = shop;
+      }else if (side4 == closest) {
         thisObject.y = colObj.y + colObj.h;
       }
     }
   }
 }
 
-for (let i = 0; i < 3; i++) {
+for (let i = 0; i < 2; i++) {
   new Enemy(0, Math.random() * c.height);
+}
+
+function camera(){
+  ctx.drawImage(background, player.x, player.y , 0, 0, 0, 0, c.width, c.height);
 }
 
 drawObjects.push(player);
 collisionObjects.push(cage);
+collisionObjects.push(hut);
 drawObjects.push(cage);
-
+drawObjects.push(hut);
 function loop() {
   ctx.drawImage(background, 0, 0, c.width, c.height);
+  // ctx.drawImage(background, player.x, player.y , c.width, c.height, 0, 0, c.width, c.height);
   frameCount++;
-
+  if (background != shop){
   drawObjects.forEach((object) => {
     object.draw();
   });
-
+  }
+  if (background == shop){
+    drawObjects.forEach((object) => {
+      object.draw();
+    });
+    }
   requestAnimationFrame(loop);
 }
 
