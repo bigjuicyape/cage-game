@@ -24,6 +24,7 @@ const imgcage = document.getElementById("cage");
 const spritesheet = document.getElementById("spritesheetboss");
 const imgbullet = document.getElementById("bulletsprite");
 const spritesheet2 = document.getElementById("spritesheetboss2");
+const playersheet = document.getElementById("playersheet");
 const imgcoins = document.getElementById("coins");
 const imgcoin = document.getElementById("coin");
 const deadboy = document.getElementById("deadenemy");
@@ -72,6 +73,7 @@ let sizemultiplier = 1;
 let money = 100;
 let goblinspeed = 1.4;
 let level = 1;
+let shootspeed = 250;
 let background = bg;
 let collisionObjects = [];
 let drawObjects = [];
@@ -156,7 +158,7 @@ let player = {
 
   shoot: function () {
     if (player.cooldown <= 0 && mouse.down) {
-      player.cooldown = 250;
+      player.cooldown = shootspeed;
       new Projectile();
     }
   },
@@ -175,8 +177,8 @@ let cage = {
 };
 
 let tikitrophy = {
-  x: c.width / 2 - 150,
-  y: 290,
+  x: c.width / 2.7,
+  y: c.height/3.5,
   w: 100,
   h: 100,
   i: imgtikitrophy,
@@ -187,7 +189,7 @@ let tikitrophy = {
 };
 let gunItem = {
   x: c.width / 2,
-  y: 290,
+  y: c.height/3.5,
   w: 100,
   h: 100,
   i: imggun,
@@ -197,8 +199,8 @@ let gunItem = {
   },
 };
 let shoes = {
-  x: c.width / 2 + 150,
-  y: 290,
+  x: c.width / 1.65,
+  y: c.height/3.5,
   w: 100,
   h: 100,
   i: imgshoes,
@@ -221,8 +223,8 @@ let shoes = {
 // };
 
 let hut = {
-  x: 700,
-  y: 300,
+  x: 200,
+  y: c.height/2.6,
   w: 200,
   h: 225,
   i: imghut,
@@ -314,14 +316,14 @@ class Enemy {
     if (this.dead) return ctx.drawImage(deadboy, this.x, this.y, this.w, this.h);
 
     if (this.y >= player.y + 50) {
-      ctx.drawImage(spritesheet, getAnimX(8, 80, 164), 164, 164, 164, this.x, this.y, this.w, this.h);
+      ctx.drawImage(playersheet, getAnimX(8, 80, 164), 164, 164, 164, this.x, this.y, this.w, this.h);
     } else if (this.y <= player.y - 50) {
-      ctx.drawImage(spritesheet, getAnimX(8, 80, 164), 0, 164, 164, this.x, this.y, this.w, this.h);
+      ctx.drawImage(playersheet, getAnimX(8, 80, 164), 0, 164, 164, this.x, this.y, this.w, this.h);
     } else {
       if (this.x >= player.x) {
-        ctx.drawImage(spritesheet, getAnimX(8, 80, 164), 492, 164, 164, this.x, this.y, this.w, this.h);
+        ctx.drawImage(playersheet, getAnimX(8, 80, 164), 492, 164, 164, this.x, this.y, this.w, this.h);
       } else {
-        ctx.drawImage(spritesheet, getAnimX(8, 80, 164), 328, 164, 164, this.x, this.y, this.w, this.h);
+        ctx.drawImage(playersheet, getAnimX(8, 80, 164), 328, 164, 164, this.x, this.y, this.w, this.h);
       }
     }
   }
@@ -396,9 +398,9 @@ function checkCollision(thisObject) {
           randomSound.play();
         }
 
-        if (colObj.type == "tikitrophy" && money >= 100) {
+        if (colObj.type == "tikitrophy" && money >= 15) {
           colObj.dead = true;
-          money -= 100;
+          money -= 15;
           tikisound.play();
           player.hp = 3;
         }
@@ -407,7 +409,7 @@ function checkCollision(thisObject) {
           removeFromArray(colObj, collisionObjects);
           money -= 100;
           getscoin.play();
-          player.speed++;
+          player.speed = player.speed * 2
           shoes.w = 0;
         }
         if (colObj.type == "gun" && money >= 100) {
@@ -416,7 +418,8 @@ function checkCollision(thisObject) {
           money -= 100;
           getscoin.play();
           fireballImg = imgbullet;
-          player.projectileSpeed += 20;
+          player.projectileSpeed += 70;
+          shootspeed -= 125;
           gunItem.w = 0;
         }
         console.log(colObj.type);
@@ -608,7 +611,7 @@ function setup() {
   // new Enemy(0, 100, 230);
   // new Enemy(0, c.height / 2 - 100, 230);
   // new Enemy(0, c.height - 300, 230);
-  new Enemy(cage.x, cage.y + cage.h / 2);
+  // new Enemy(cage.x, cage.y + cage.h / 2);
   drawObjects.push(player);
   drawObjects.push(cage);
   drawObjects.push(hut);
