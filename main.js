@@ -70,7 +70,7 @@ function mousemoveHandler(event) {
 
 let timer = 1;
 let sizemultiplier = 1;
-let money = 100;
+let money = 0;
 let goblinspeed = 1.4;
 let level = 1;
 let shootspeed = 250;
