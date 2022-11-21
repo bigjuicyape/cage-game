@@ -17,6 +17,7 @@ const lifeDead = document.getElementById("deadlife");
 const hole1 = document.getElementById("hole1");
 const hole2 = document.getElementById("hole2");
 const imggun = document.getElementById("glock");
+const imggunshoot = document.getElementById("glock shoot");
 const imgshoes = document.getElementById("shoe");
 const imghut = document.getElementById("hut");
 const deadplayer = document.getElementById("deadplayer");
@@ -94,7 +95,10 @@ let player = {
   y: c.height / 2 - 100 / 2 + 50,
   w: 90,
   h: 70,
-  i: down,
+  i: dart,
+  animY: 0,
+  animX: 0,
+  gunI: imggun,
   speed: 4,
   alpha: 1,
   vx: 0,
@@ -107,51 +111,59 @@ let player = {
   center: {},
   projectileSpeed: 5,
   reload: 150,
-  vScale: 1,
   draw: function () {
     this.invincibility--;
     this.cooldown--;
 
     this.blink();
     this.shoot();
-
     this.center = { x: this.x + this.w / 2, y: this.y + this.h / 2 };
 
     ctx.globalAlpha = this.alpha;
-    ctx.drawImage(this.i, this.x, this.y, 0, this.h);
+    ctx.drawImage(dart, this.animX, this.animY, 125, 125, this.x, this.y, this.w, this.h);
     ctx.globalAlpha = 1;
 
-    // ctx.rotate(atan2);
-    Math.abs(atan2) > Math.PI / 2 ? (this.vScale = -1) : (this.vScale = 1);
-    ctx.scale(1, 1);
-    ctx.drawImage(imggun, player.x, player.y, player.weaponFlip * 32, 11);
+    let xDist = mouse.x - player.x;
+    let yDist = mouse.y - player.y;
+    let atan2 = Math.atan2(yDist, xDist);
+
+    ctx.save();
+    ctx.translate(this.x + 40, this.y + 30);
+    ctx.rotate(atan2);
+
+    ctx.drawImage(this.gunI, -140 / 2, -32 / 2, 140, 32);
+    ctx.restore();
   },
 
   move: function () {
     if (input.a) {
-      ctx.drawImage(dart, getAnimX(8, 5, 129), 1974, 125, 125, this.x - 14, this.y, this.w, this.h);
       this.vx = -player.speed;
-      this.i = left;
+      this.animX = getAnimX(8, 5, 129);
+      this.animY = 1974;
     } else if (input.d) {
-      ctx.drawImage(dart, getAnimX(8, 5, 129), 564, 125, 125, this.x + 9, this.y, this.w, this.h);
       this.vx = player.speed;
-      this.i = right;
+      this.animX = getAnimX(8, 5, 129);
+      this.animY = 564;
     } else {
       this.vx = 0;
-      ctx.drawImage(dart, 0, 0, 125, 125, this.x + 3, this.y, this.w, this.h);
     }
 
     if (input.w) {
       this.vy = -player.speed;
-      this.i = up;
-      ctx.drawImage(dart, getAnimX(8, 5, 129), 1128, 125, 125, this.x + 1, this.y, this.w, this.h);
+      this.animX = getAnimX(8, 5, 129);
+      this.animY = 1128;
     } else if (input.s) {
       this.vy = player.speed;
-      this.i = down;
-      ctx.drawImage(dart, getAnimX(8, 5, 129), 0, 125, 125, this.x + 4, this.y + 9, this.w, this.h);
+      this.animX = getAnimX(8, 5, 129);
+      this.animY = 0;
     } else {
       this.vy = 0;
-      ctx.drawImage(dart, 0, 0, 125, 125, this.x + 3, this.y, this.w, this.h);
+    }
+
+    if (!input.a && !input.d && !input.w && !input.s) {
+      this.vy = 0;
+      this.animX = 0;
+      this.animY = 0;
     }
 
     if ((input.a || input.d) && (input.w || input.s)) {
@@ -177,13 +189,10 @@ let player = {
     if (this.cooldown <= 0 && mouse.down) {
       this.cooldown = this.reload;
       new Projectile();
-    }
+      this.gunI = imggunshoot;
+    } else if (this.cooldown == this.reload - 15) player.gunI = imggun;
   },
 };
-
-let xDist = mouse.x - player.y;
-let yDist = mouse.y - player.y;
-let atan2 = Math.atan2(yDist, xDist);
 
 let cage = {
   x: c.width / 2 + 450 * Math.random(),
@@ -307,10 +316,12 @@ class Projectile {
     this.speed = player.projectileSpeed;
     this.type = "projectile";
     this.hitBox = new Box(this, 0.35, 0.25, 0.3, 0.6);
+    this.colBox = new Box(this, 0.35, 0.25, 0.3, 0.6);
+    this.area = player.area;
+
+    areas[this.area].colCheck.push(this);
 
     this.getVelocity();
-
-    drawObjects.push(this);
 
     new Audio("12-Gauge-Pump-Action-Shotgun.mp3").play();
   }
@@ -349,8 +360,7 @@ class Projectile {
   }
 
   destroy() {
-    removeFromArray(this, drawObjects);
-    removeFromArray(this.hitBox, boxes);
+    removeFromArray(this, areas[this.area].colCheck);
   }
 }
 
@@ -384,27 +394,29 @@ class Enemy {
     if (run) this.vx = this.speed * Math.cos(this.angle);
     if (rise) this.vy = this.speed * Math.sin(this.angle);
 
-    // this.x += this.vx;
-    // this.y += this.vy;
+    this.x += this.vx;
+    this.y += this.vy;
   }
 
   draw() {
     if (this.dead) return ctx.drawImage(deadboy, this.x, this.y, this.w, this.h);
 
-    let x1 = this.x + this.w / 2;
-    let y1 = this.y + this.h / 2;
-    let r = 400;
-    let sections = 18;
-    for (let theta = Math.PI / sections; theta < 2 * Math.PI; theta += (2 * Math.PI) / sections) {
-      ctx.moveTo(x1, y1);
-      ctx.lineTo(x1 + r * Math.cos(theta), y1 + r * Math.sin(theta));
-      // if (frameCount == 0) console.log(Math.floor((theta * 9) / Math.PI));
-    }
-    ctx.stroke();
+    // let x1 = this.x + this.w / 2;
+    // let y1 = this.y + this.h / 2;
+    // let r = 400;
+    // let sections = 18;
+    // for (let theta = Math.PI / sections; theta < 2 * Math.PI; theta += (2 * Math.PI) / sections) {
+    //   ctx.moveTo(x1, y1);
+    //   ctx.lineTo(x1 + r * Math.cos(theta), y1 + r * Math.sin(theta));
+    //   // if (frameCount == 0) console.log(Math.floor((theta * 9) / Math.PI));
+    // }
+    // ctx.stroke();
 
+    console.log(Math.floor((this.angle * 9) / Math.PI) + 9 + Math.PI / 18);
     const animY = Math.floor((this.angle * 9) / Math.PI + 9 + Math.PI / 18);
+    // console.log(animY);
 
-    ctx.drawImage(barb, getAnimX(10, 8, 193), animY * 209, 164, 164, this.x - 6, this.y - 15, this.w, this.h);
+    ctx.drawImage(barb, getAnimX(8, 7, 122), animY * 124, 80, 80, this.x - 25, this.y - 15, this.w, this.h);
   }
 }
 function checkBoundaries(thisObject) {
@@ -468,8 +480,7 @@ function checkCollision() {
       for (const obstacle of obstacleArr) {
         const inside = checkIfInside(check, obstacle);
         if (inside) {
-          check.owner.x -= check.owner.vx;
-          check.owner.y -= check.owner.vy;
+          goToClosest(check, obstacle);
         }
       }
     }
@@ -545,20 +556,26 @@ function checkIfInside(box1, box2) {
 }
 
 function goToClosest(box1, box2) {
-  let side1 = Math.abs(box1.x + box1.w - box2.x);
-  let side2 = Math.abs(box1.x - (box2.x + box2.w));
-  let side3 = Math.abs(box1.y + box1.h - box2.y);
-  let side4 = Math.abs(box1.y - (box2.y + box2.h));
+  const pos1 = box1.getPos();
+  const pos2 = box2.getPos();
+
+  let side1 = Math.abs(pos1.x + pos1.w - pos2.x);
+  let side2 = Math.abs(pos1.x - (pos2.x + pos2.w));
+  let side3 = Math.abs(pos1.y + pos1.h - pos2.y);
+  let side4 = Math.abs(pos1.y - (pos2.y + pos2.h));
 
   let closest = Math.min(side1, side2, side3, side4);
+  const dx = box1.owner.x - pos1.x;
+  const dy = box1.owner.y - pos1.y;
+
   if (side1 == closest) {
-    box1.x = box2.x - box1.w;
+    box1.owner.x = pos2.x - pos1.w + dx;
   } else if (side2 == closest) {
-    box1.x = box2.x + box2.w;
+    box1.owner.x = pos2.x + pos2.w + dx;
   } else if (side3 == closest) {
-    box1.y = box2.y - box1.h;
+    box1.owner.y = pos2.y - pos1.h + dy;
   } else if (side4 == closest) {
-    box1.y = box2.y + box2.h;
+    box1.owner.y = pos2.y + pos2.h + dy;
   }
 }
 
@@ -768,9 +785,11 @@ function loop() {
   checkCollision();
 
   const playerArea = areas[player.area];
+
   for (let i = 0; i < playerArea.colCheck.length; i++) {
     playerArea.colCheck[i].draw();
   }
+
   for (let i = 0; i < playerArea.obstacles.length; i++) {
     playerArea.obstacles[i].draw();
   }
