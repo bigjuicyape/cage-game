@@ -26,7 +26,6 @@ const imgmerchant = document.getElementById("merchant");
 const spritesheet = document.getElementById("spritesheetboss");
 const imgbullet = document.getElementById("bulletsprite");
 const spritesheet2 = document.getElementById("spritesheetboss2");
-const playersheet = document.getElementById("playersheet");
 const imgcoins = document.getElementById("coins");
 const imgcoin = document.getElementById("coin");
 const deadboy = document.getElementById("deadenemy");
@@ -34,6 +33,7 @@ const imgtikitrophy = document.getElementById("tiki");
 const dart = document.getElementById("dart");
 const barb = document.getElementById("barb");
 const atk = document.getElementById("atk");
+const atkwave = document.getElementById("wave");
 
 let fireballImg = document.getElementById("fireball");
 const creak = new Audio("creak.mp3");
@@ -79,7 +79,6 @@ let sizemultiplier = 1;
 let money = 100;
 let goblinspeed = 2.4;
 let level = 1;
-let shootspeed = 250;
 let background = bg;
 let collisionObjects = [];
 let drawObjects = [];
@@ -191,9 +190,13 @@ let player = {
   shoot: function () {
     if (this.cooldown <= 0 && mouse.down) {
       this.cooldown = this.reload;
-      new Projectile();
+      new Projectile(this);
       this.gunI = imggunshoot;
     } else if (this.cooldown == this.reload - 15) player.gunI = imggun;
+  },
+
+  hurtCallback() {
+    console.log("ow");
   },
 };
 
@@ -210,8 +213,8 @@ let cage = {
 };
 
 let tikitrophy = {
-  x: c.width / 2.7,
-  y: c.height/3.5,
+  x: c.width / 2 - 150,
+  y: 290,
   w: 100,
   h: 100,
   i: imgtikitrophy,
@@ -222,7 +225,7 @@ let tikitrophy = {
 };
 let gunItem = {
   x: c.width / 2,
-  y: c.height/3.5,
+  y: 290,
   w: 100,
   h: 100,
   i: imggun,
@@ -232,8 +235,8 @@ let gunItem = {
   },
 };
 let shoes = {
-  x: c.width / 1.65,
-  y: c.height/3.5,
+  x: c.width / 2 + 150,
+  y: 290,
   w: 100,
   h: 100,
   i: imgshoes,
@@ -256,8 +259,8 @@ let shoes = {
 // };
 
 let hut = {
-  x: 200,
-  y: c.height/2.6,
+  x: 700,
+  y: 300,
   w: 200,
   h: 225,
   i: imghut,
@@ -280,13 +283,13 @@ let merchant = {
 };
 
 class Box {
-  constructor(owner, cx, cy, cw, ch, callback) {
+  constructor(owner, cx, cy, cw, ch, colCallback) {
     this.owner = owner;
     this.cx = cx;
     this.cy = cy;
     this.cw = cw;
     this.ch = ch;
-    this.colCallback = callback;
+    this.colCallback = colCallback;
 
     boxes.push(this);
   }
@@ -308,12 +311,12 @@ class Box {
 }
 
 player.colbox = new Box(player, 0.17, 0.15, 0.6, 0.7);
-player.hurtbox = new Box(player, 0.3, 0.4, 0.3, 0.3);
+player.hurtbox = new Box(player, 0.3, 0.4, 0.3, 0.3, player.hurtCallback);
 cage.colbox = new Box(cage, 0, 0, 1, 1);
 hut.colbox = new Box(hut, 0.1, 0.1, 0.8, 0.8);
 
 class Projectile {
-  constructor() {
+  constructor(owner) {
     this.w = 100 * sizemultiplier;
     this.h = 50 * sizemultiplier;
     this.x = player.x + (player.w - this.w) / 2;
@@ -321,11 +324,12 @@ class Projectile {
     this.speed = player.projectileSpeed;
     this.type = "projectile";
     this.area = player.area;
-
-    this.hitbox = new Box(this, 0.35, 0.25, 0.3, 0.6, this.colCallback);
+    this.hitbox = new Box(this, 0.35, 0.25, 0.3, 0.6);
     this.colbox = new Box(this, 0.35, 0.25, 0.3, 0.6, this.colCallback);
+    this.owner = owner;
 
     areas[this.area].col.push(this);
+    areas[this.area].hit.push(this);
 
     this.getVelocity();
 
@@ -365,7 +369,7 @@ class Projectile {
     }
   }
 
-  callback(col, obst) {
+  colCallback(col, obst) {
     removeFromArray(col.owner, areas[col.owner.area].col);
   }
 }
@@ -379,7 +383,7 @@ class Enemy {
     this.vx = 0;
     this.vy = 0;
     this.dead = false;
-    this.speed = goblinspeed;
+    this.speed = 2;
     this.type = "enemy";
     this.area = "start";
     this.target = player;
@@ -407,35 +411,19 @@ class Enemy {
 
   draw() {
     if (this.dead) return ctx.drawImage(deadboy, this.x, this.y, this.w, this.h);
-<<<<<<< HEAD
-<<<<<<< HEAD
 
     const animY = Math.round((this.angle * 9) / Math.PI + 9) % 18;
-    if (Math.abs(this.x - player.x) < 100) {
-      ctx.drawImage(atk, getAnimX(4, 2, 122), Math.floor(animY / 2) * 124, 80, 80, this.x - 25, this.y - 15, this.w, this.h);
+    if (Math.abs(this.x - player.x) + Math.abs(this.y - player.y) < 300) {
+      ctx.drawImage(atk, getAnimX(4, 4, 122), Math.floor(animY / 2) * 124, 80, 80, this.x - 25, this.y - 15, this.w, this.h);
+
+      ctx.save();
+      ctx.translate(this.x + this.w / 2, this.y + this.h / 2);
+      ctx.rotate(50 * this.angle * (Math.PI / 180));
+      ctx.drawImage(atkwave, getAnimX(4, 4, 128), 0, 130, 128, 100 - this.w / 2, -300 / 2, this.w, 300);
+      ctx.restore();
     } else {
-      ctx.drawImage(barb, getAnimX(8, 4, 122), animY * 124, 80, 80, this.x - 25, this.y - 15, this.w, this.h);
+      ctx.drawImage(barb, getAnimX(8, 10, 122), animY * 124, 80, 80, this.x - 25, this.y - 15, this.w, this.h);
     }
-=======
-=======
->>>>>>> 9dad6828323f8e6a6483eb9491d8f683afa987f7
-    // let x1 = this.x + this.w / 2;
-    // let y1 = this.y + this.h / 2;
-    // let r = 400;
-    // let sections = 18;
-    // for (let theta = Math.PI / sections; theta < 2 * Math.PI; theta += (2 * Math.PI) / sections) {
-    //   ctx.moveTo(x1, y1);
-    //   ctx.lineTo(x1 + r * Math.cos(theta), y1 + r * Math.sin(theta));
-    //   // if (frameCount == 0) console.log(Math.floor((theta * 9) / Math.PI));
-    // }
-    // ctx.stroke();
-
-    console.log(Math.floor((this.angle * 9) / Math.PI) + 9 + Math.PI / 18);
-    const animY = Math.floor((this.angle * 9) / Math.PI + 9 + Math.PI / 18);
-    // console.log(animY);
-
-    ctx.drawImage(barb, getAnimX(8, 7, 122), animY * 124, 80, 80, this.x - 25, this.y - 15, this.w, this.h);
->>>>>>> 9dad6828323f8e6a6483eb9491d8f683afa987f7
   }
 }
 
@@ -503,73 +491,24 @@ function checkCollision() {
         const inside = checkIfInside(col, obst);
         if (!inside) continue;
 
-        if (col.callback) {
+        if (col.colCallback) {
           col.colCallback(col, obst);
         } else {
           goToClosest(col, obst);
         }
       }
-<<<<<<< HEAD
-<<<<<<< HEAD
     }
 
     for (const hit of hitArr) {
       for (const hurt of hurtArr) {
         const inside = checkIfInside(hit, hurt);
 
-        if (inside) hurt.hurtCallback(hit, hurt);
+        if (inside) {
+          // console.log(hurt);
+          // hurt.hurtCallback(hit, hurt);
+        }
       }
     }
-=======
-=======
->>>>>>> 9dad6828323f8e6a6483eb9491d8f683afa987f7
-      if (thisObject.type == "projectile") {
-    //     if (colObj.type == "enemy") {
-    //       colObj.dead = true;
-    //       removeFromArray(colObj, collisionObjects);
-
-    //       const sounds = [new Audio("gets hurt.mp3"), new Audio("gets hurt 2.mp3")];
-    //       const randomSound = sounds[getRandInt(0, 1)];
-    //       money += 1;
-    //       randomSound.play();
-    //     }
-
-    //     if (colObj.type == "tikitrophy" && money >= 15) {
-    //       colObj.dead = true;
-    //       money -= 15;
-    //       tikisound.play();
-    //       player.hp = 3;
-    //     }
-    //     if (colObj.type == "shoes" && money >= 100) {
-    //       colObj.dead = true;
-    //       removeFromArray(colObj, collisionObjects);
-    //       money -= 100;
-    //       getscoin.play();
-    //       player.speed = player.speed * 2
-    //       shoes.w = 0;
-    //     }
-    //     if (colObj.type == "gun" && money >= 100) {
-    //       colObj.dead = true;
-    //       removeFromArray(colObj, collisionObjects);
-    //       money -= 100;
-    //       getscoin.play();
-    //       fireballImg = imgbullet;
-    //       player.projectileSpeed += 70;
-    //       shootspeed -= 125;
-    //       gunItem.w = 0;
-    //     }
-    //     console.log(colObj.type);
-
-    //     removeFromArray(thisObject, drawObjects);
-    //     return;
-    //   }
-
-    //   goToClosest(thisObject, colObj);
-    // }
-<<<<<<< HEAD
->>>>>>> 9dad6828323f8e6a6483eb9491d8f683afa987f7
-=======
->>>>>>> 9dad6828323f8e6a6483eb9491d8f683afa987f7
   }
 
   // for (let i = 0; i < collisionObjects.length; i++) {
@@ -627,8 +566,6 @@ function checkCollision() {
   //     goToClosest(thisObject, colObj);
   //   }
   // }
-}
-}
 }
 
 function checkIfInside(box1, box2) {
