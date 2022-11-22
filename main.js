@@ -408,6 +408,7 @@ class Enemy {
   draw() {
     if (this.dead) return ctx.drawImage(deadboy, this.x, this.y, this.w, this.h);
 <<<<<<< HEAD
+<<<<<<< HEAD
 
     const animY = Math.round((this.angle * 9) / Math.PI + 9) % 18;
     if (Math.abs(this.x - player.x) < 100) {
@@ -416,6 +417,8 @@ class Enemy {
       ctx.drawImage(barb, getAnimX(8, 4, 122), animY * 124, 80, 80, this.x - 25, this.y - 15, this.w, this.h);
     }
 =======
+=======
+>>>>>>> 9dad6828323f8e6a6483eb9491d8f683afa987f7
     // let x1 = this.x + this.w / 2;
     // let y1 = this.y + this.h / 2;
     // let r = 400;
@@ -507,6 +510,7 @@ function checkCollision() {
         }
       }
 <<<<<<< HEAD
+<<<<<<< HEAD
     }
 
     for (const hit of hitArr) {
@@ -517,6 +521,8 @@ function checkCollision() {
       }
     }
 =======
+=======
+>>>>>>> 9dad6828323f8e6a6483eb9491d8f683afa987f7
       if (thisObject.type == "projectile") {
     //     if (colObj.type == "enemy") {
     //       colObj.dead = true;
@@ -560,6 +566,9 @@ function checkCollision() {
 
     //   goToClosest(thisObject, colObj);
     // }
+<<<<<<< HEAD
+>>>>>>> 9dad6828323f8e6a6483eb9491d8f683afa987f7
+=======
 >>>>>>> 9dad6828323f8e6a6483eb9491d8f683afa987f7
   }
 
