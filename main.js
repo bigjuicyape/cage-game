@@ -26,12 +26,14 @@ const imgmerchant = document.getElementById("merchant");
 const spritesheet = document.getElementById("spritesheetboss");
 const imgbullet = document.getElementById("bulletsprite");
 const spritesheet2 = document.getElementById("spritesheetboss2");
+const playersheet = document.getElementById("playersheet");
 const imgcoins = document.getElementById("coins");
 const imgcoin = document.getElementById("coin");
 const deadboy = document.getElementById("deadenemy");
 const imgtikitrophy = document.getElementById("tiki");
 const dart = document.getElementById("dart");
 const barb = document.getElementById("barb");
+const atk = document.getElementById("atk");
 
 let fireballImg = document.getElementById("fireball");
 const creak = new Audio("creak.mp3");
@@ -77,6 +79,7 @@ let sizemultiplier = 1;
 let money = 100;
 let goblinspeed = 2.4;
 let level = 1;
+let shootspeed = 250;
 let background = bg;
 let collisionObjects = [];
 let drawObjects = [];
@@ -110,7 +113,7 @@ let player = {
   area: "start",
   center: {},
   projectileSpeed: 5,
-  reload: 150,
+  reload: 100,
   draw: function () {
     this.invincibility--;
     this.cooldown--;
@@ -207,8 +210,8 @@ let cage = {
 };
 
 let tikitrophy = {
-  x: c.width / 2 - 150,
-  y: 290,
+  x: c.width / 2.7,
+  y: c.height/3.5,
   w: 100,
   h: 100,
   i: imgtikitrophy,
@@ -219,7 +222,7 @@ let tikitrophy = {
 };
 let gunItem = {
   x: c.width / 2,
-  y: 290,
+  y: c.height/3.5,
   w: 100,
   h: 100,
   i: imggun,
@@ -229,8 +232,8 @@ let gunItem = {
   },
 };
 let shoes = {
-  x: c.width / 2 + 150,
-  y: 290,
+  x: c.width / 1.65,
+  y: c.height/3.5,
   w: 100,
   h: 100,
   i: imgshoes,
@@ -253,8 +256,8 @@ let shoes = {
 // };
 
 let hut = {
-  x: 700,
-  y: 300,
+  x: 200,
+  y: c.height/2.6,
   w: 200,
   h: 225,
   i: imghut,
@@ -277,12 +280,13 @@ let merchant = {
 };
 
 class Box {
-  constructor(owner, cx, cy, cw, ch) {
+  constructor(owner, cx, cy, cw, ch, callback) {
     this.owner = owner;
     this.cx = cx;
     this.cy = cy;
     this.cw = cw;
     this.ch = ch;
+    this.colCallback = callback;
 
     boxes.push(this);
   }
@@ -303,9 +307,10 @@ class Box {
   }
 }
 
-player.colBox = new Box(player, 0.17, 0.15, 0.6, 0.7);
-cage.colBox = new Box(cage, 0, 0, 1, 1);
-hut.colBox = new Box(hut, 0.1, 0.1, 0.8, 0.8);
+player.colbox = new Box(player, 0.17, 0.15, 0.6, 0.7);
+player.hurtbox = new Box(player, 0.3, 0.4, 0.3, 0.3);
+cage.colbox = new Box(cage, 0, 0, 1, 1);
+hut.colbox = new Box(hut, 0.1, 0.1, 0.8, 0.8);
 
 class Projectile {
   constructor() {
@@ -315,11 +320,12 @@ class Projectile {
     this.y = player.y + (player.h - this.h) / 2;
     this.speed = player.projectileSpeed;
     this.type = "projectile";
-    this.hitBox = new Box(this, 0.35, 0.25, 0.3, 0.6);
-    this.colBox = new Box(this, 0.35, 0.25, 0.3, 0.6);
     this.area = player.area;
 
-    areas[this.area].colCheck.push(this);
+    this.hitbox = new Box(this, 0.35, 0.25, 0.3, 0.6, this.colCallback);
+    this.colbox = new Box(this, 0.35, 0.25, 0.3, 0.6, this.colCallback);
+
+    areas[this.area].col.push(this);
 
     this.getVelocity();
 
@@ -359,8 +365,8 @@ class Projectile {
     }
   }
 
-  destroy() {
-    removeFromArray(this, areas[this.area].colCheck);
+  callback(col, obst) {
+    removeFromArray(col.owner, areas[col.owner.area].col);
   }
 }
 
@@ -377,7 +383,8 @@ class Enemy {
     this.type = "enemy";
     this.area = "start";
     this.target = player;
-    this.colBox = new Box(this, 0.17, 0.15, 0.6, 0.7);
+    this.colbox = new Box(this, 0.17, 0.15, 0.6, 0.7);
+    this.hitbox = new Box(this, 0.17, 0.15, 0.6, 0.7);
 
     collisionObjects.push(this);
     drawObjects.push(this);
@@ -400,7 +407,15 @@ class Enemy {
 
   draw() {
     if (this.dead) return ctx.drawImage(deadboy, this.x, this.y, this.w, this.h);
+<<<<<<< HEAD
 
+    const animY = Math.round((this.angle * 9) / Math.PI + 9) % 18;
+    if (Math.abs(this.x - player.x) < 100) {
+      ctx.drawImage(atk, getAnimX(4, 2, 122), Math.floor(animY / 2) * 124, 80, 80, this.x - 25, this.y - 15, this.w, this.h);
+    } else {
+      ctx.drawImage(barb, getAnimX(8, 4, 122), animY * 124, 80, 80, this.x - 25, this.y - 15, this.w, this.h);
+    }
+=======
     // let x1 = this.x + this.w / 2;
     // let y1 = this.y + this.h / 2;
     // let r = 400;
@@ -417,23 +432,25 @@ class Enemy {
     // console.log(animY);
 
     ctx.drawImage(barb, getAnimX(8, 7, 122), animY * 124, 80, 80, this.x - 25, this.y - 15, this.w, this.h);
+>>>>>>> 9dad6828323f8e6a6483eb9491d8f683afa987f7
   }
 }
+
 function checkBoundaries(thisObject) {
-  // if (thisObject.type == "enemy" && background == bg) {
-  //   if (thisObject.x <= cage.x && thisObject.y < cage.h / 2.4 + cage.y && thisObject.x < cage.x + cage.w / 2.4 && thisObject.y > cage.y) {
-  //     thisObject.x = cage.x;
-  //   }
-  //   if (thisObject.y > cage.h / 2.4 + cage.y) {
-  //     thisObject.y = cage.y + cage.h / 2.4;
-  //   }
-  //   if (thisObject.x > cage.x + cage.w / 2.4) {
-  //     thisObject.x = cage.x + cage.w / 2.4;
-  //   }
-  //   if (thisObject.y < cage.y) {
-  //     thisObject.y = cage.y;
-  //   }
-  // }
+  if (thisObject.type == "enemy" && background == bg) {
+    if (thisObject.x <= cage.x && thisObject.y < cage.h / 2.4 + cage.y && thisObject.x < cage.x + cage.w / 2.4 && thisObject.y > cage.y) {
+      thisObject.x = cage.x;
+    }
+    if (thisObject.y > cage.h / 2.4 + cage.y) {
+      thisObject.y = cage.y + cage.h / 2.4;
+    }
+    if (thisObject.x > cage.x + cage.w / 2.4) {
+      thisObject.x = cage.x + cage.w / 2.4;
+    }
+    if (thisObject.y < cage.y) {
+      thisObject.y = cage.y;
+    }
+  }
   if (thisObject.area == "start" && (thisObject.type == "player" || player.area == "hut")) {
     if (thisObject.x < 0) {
       thisObject.x = 0;
@@ -472,18 +489,78 @@ function checkBoundaries(thisObject) {
 }
 
 function checkCollision() {
-  const checkArr = areas[player.area].colCheck.map((x) => x.colBox);
-  const obstacleArr = areas[player.area].obstacles.map((x) => x.colBox);
+  for (const area in areas) {
+    const colArr = areas[area].col.map((x) => x.colbox);
+    const obstArr = areas[area].obst.map((x) => x.colbox);
+    const hitArr = areas[area].hit.map((x) => x.hitbox);
+    const hurtArr = areas[area].hurt.map((x) => x.hurtbox);
 
-  for (const check of checkArr) {
-    if (check) {
-      for (const obstacle of obstacleArr) {
-        const inside = checkIfInside(check, obstacle);
-        if (inside) {
-          goToClosest(check, obstacle);
+    for (const col of colArr) {
+      for (const obst of obstArr) {
+        const inside = checkIfInside(col, obst);
+        if (!inside) continue;
+
+        if (col.callback) {
+          col.colCallback(col, obst);
+        } else {
+          goToClosest(col, obst);
         }
       }
+<<<<<<< HEAD
     }
+
+    for (const hit of hitArr) {
+      for (const hurt of hurtArr) {
+        const inside = checkIfInside(hit, hurt);
+
+        if (inside) hurt.hurtCallback(hit, hurt);
+      }
+    }
+=======
+      if (thisObject.type == "projectile") {
+    //     if (colObj.type == "enemy") {
+    //       colObj.dead = true;
+    //       removeFromArray(colObj, collisionObjects);
+
+    //       const sounds = [new Audio("gets hurt.mp3"), new Audio("gets hurt 2.mp3")];
+    //       const randomSound = sounds[getRandInt(0, 1)];
+    //       money += 1;
+    //       randomSound.play();
+    //     }
+
+    //     if (colObj.type == "tikitrophy" && money >= 15) {
+    //       colObj.dead = true;
+    //       money -= 15;
+    //       tikisound.play();
+    //       player.hp = 3;
+    //     }
+    //     if (colObj.type == "shoes" && money >= 100) {
+    //       colObj.dead = true;
+    //       removeFromArray(colObj, collisionObjects);
+    //       money -= 100;
+    //       getscoin.play();
+    //       player.speed = player.speed * 2
+    //       shoes.w = 0;
+    //     }
+    //     if (colObj.type == "gun" && money >= 100) {
+    //       colObj.dead = true;
+    //       removeFromArray(colObj, collisionObjects);
+    //       money -= 100;
+    //       getscoin.play();
+    //       fireballImg = imgbullet;
+    //       player.projectileSpeed += 70;
+    //       shootspeed -= 125;
+    //       gunItem.w = 0;
+    //     }
+    //     console.log(colObj.type);
+
+    //     removeFromArray(thisObject, drawObjects);
+    //     return;
+    //   }
+
+    //   goToClosest(thisObject, colObj);
+    // }
+>>>>>>> 9dad6828323f8e6a6483eb9491d8f683afa987f7
   }
 
   // for (let i = 0; i < collisionObjects.length; i++) {
@@ -541,6 +618,8 @@ function checkCollision() {
   //     goToClosest(thisObject, colObj);
   //   }
   // }
+}
+}
 }
 
 function checkIfInside(box1, box2) {
@@ -741,8 +820,8 @@ function setup() {
   collisionObjects = [cage, slide, hut, ...enemies];
 
   areas = {
-    start: { colCheck: [player, ...enemies], obstacles: [hut, cage], hit: [], hurt: [] },
-    hut: { colCheck: [], obstacles: [], hit: [], hurt: [] },
+    start: { col: [player, ...enemies], obst: [hut, cage], hit: [], hurt: [player] },
+    hut: { col: [], obst: [], hit: [], hurt: [] },
   };
 
   startAnimating();
@@ -777,8 +856,8 @@ function loop() {
   adadaLife();
 
   for (const area in areas) {
-    for (const check of areas[area].colCheck) {
-      check.move();
+    for (const col of areas[area].col) {
+      col.move();
     }
   }
 
@@ -786,12 +865,12 @@ function loop() {
 
   const playerArea = areas[player.area];
 
-  for (let i = 0; i < playerArea.colCheck.length; i++) {
-    playerArea.colCheck[i].draw();
+  for (let i = 0; i < playerArea.col.length; i++) {
+    playerArea.col[i].draw();
   }
 
-  for (let i = 0; i < playerArea.obstacles.length; i++) {
-    playerArea.obstacles[i].draw();
+  for (let i = 0; i < playerArea.obst.length; i++) {
+    playerArea.obst[i].draw();
   }
 
   for (let i = 0; i < boxes.length; i++) {
