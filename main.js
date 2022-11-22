@@ -316,7 +316,7 @@ cage.colbox = new Box(cage, 0, 0, 1, 1);
 hut.colbox = new Box(hut, 0.1, 0.1, 0.8, 0.8);
 
 class Projectile {
-  constructor(owner) {
+  constructor(attacker) {
     this.w = 100 * sizemultiplier;
     this.h = 50 * sizemultiplier;
     this.x = player.x + (player.w - this.w) / 2;
@@ -326,7 +326,7 @@ class Projectile {
     this.area = player.area;
     this.hitbox = new Box(this, 0.35, 0.25, 0.3, 0.6);
     this.colbox = new Box(this, 0.35, 0.25, 0.3, 0.6, this.colCallback);
-    this.owner = owner;
+    this.attacker = attacker;
 
     areas[this.area].col.push(this);
     areas[this.area].hit.push(this);
@@ -364,9 +364,9 @@ class Projectile {
     ctx.drawImage(fireballImg, getAnimX(3, 15, 250), 0, 238, 118, -this.w / 2, -this.h / 2, this.w, this.h);
     ctx.restore();
 
-    if (this.x > c.width || this.x + this.w < 0 || this.y > c.height || this.y + this.h < 0) {
-      this.destroy();
-    }
+    // if (this.x > c.width || this.x + this.w < 0 || this.y > c.height || this.y + this.h < 0) {
+    //   this.colCallback();
+    // }
   }
 
   colCallback(col, obst) {
@@ -383,12 +383,15 @@ class Enemy {
     this.vx = 0;
     this.vy = 0;
     this.dead = false;
-    this.speed = 2;
+    this.speed = 7;
     this.type = "enemy";
     this.area = "start";
     this.target = player;
     this.colbox = new Box(this, 0.17, 0.15, 0.6, 0.7);
     this.hitbox = new Box(this, 0.17, 0.15, 0.6, 0.7);
+
+    areas[this.area].col.push(this);
+    areas[this.area].hit.push(this);
 
     collisionObjects.push(this);
     drawObjects.push(this);
@@ -411,19 +414,32 @@ class Enemy {
 
   draw() {
     if (this.dead) return ctx.drawImage(deadboy, this.x, this.y, this.w, this.h);
-
+    // dogshit knockback
+    // if (Math.abs(this.x - player.x) + Math.abs(this.y - player.y) < 170) {
+    //   if (player.x >= this.x) {
+    //     player.x += 10;
+    //   } else {
+    //     player.x -= 10;
+    //   }
+    //   if (Math.abs(this.y - player.y) + Math.abs(this.x - player.x) < 170) {
+    //     if (player.y >= this.y) {
+    //       player.y += 10;
+    //     } else {
+    //       player.y -= 10;
+    //     }
+    //   }
+    // }
     const animY = Math.round((this.angle * 9) / Math.PI + 9) % 18;
-    if (Math.abs(this.x - player.x) + Math.abs(this.y - player.y) < 300) {
-      ctx.drawImage(atk, getAnimX(4, 4, 122), Math.floor(animY / 2) * 124, 80, 80, this.x - 25, this.y - 15, this.w, this.h);
-
-      ctx.save();
-      ctx.translate(this.x + this.w / 2, this.y + this.h / 2);
-      ctx.rotate(50 * this.angle * (Math.PI / 180));
-      ctx.drawImage(atkwave, getAnimX(4, 4, 128), 0, 130, 128, 100 - this.w / 2, -300 / 2, this.w, 300);
-      ctx.restore();
-    } else {
-      ctx.drawImage(barb, getAnimX(8, 10, 122), animY * 124, 80, 80, this.x - 25, this.y - 15, this.w, this.h);
-    }
+    // if (Math.abs(this.x - player.x) + Math.abs(this.y - player.y) < 300) {
+    //   ctx.drawImage(atk, getAnimX(4, 4, 122), Math.floor(animY / 2) * 124, 80, 80, this.x - 25, this.y - 15, this.w, this.h);
+    //   ctx.save();
+    //   ctx.translate(this.x + this.w / 2, this.y + this.h / 2);
+    //   ctx.rotate(50 * this.angle * (Math.PI / 180));
+    //   ctx.drawImage(atkwave, getAnimX(4, 4, 128), 0, 130, 128, 100 - this.w / 2, -300 / 2, this.w, 300);
+    //   ctx.restore();
+    // } else {
+    ctx.drawImage(barb, getAnimX(8, 10, 122), animY * 124, 80, 80, this.x - 25, this.y - 15, this.w, this.h);
+    //   }
   }
 }
 
@@ -502,10 +518,10 @@ function checkCollision() {
     for (const hit of hitArr) {
       for (const hurt of hurtArr) {
         const inside = checkIfInside(hit, hurt);
+        const hitOwner = hit.owner.attacker || hit.owner;
 
-        if (inside) {
-          // console.log(hurt);
-          // hurt.hurtCallback(hit, hurt);
+        if (inside && hitOwner.type != hurt.owner.type) {
+          hurt.owner.hurtCallback(hit, hurt);
         }
       }
     }
@@ -759,16 +775,17 @@ function setup() {
   // new Enemy(0, 100, 230);
   // new Enemy(0, c.height / 2 - 100, 230);
   // new Enemy(0, c.height - 300, 230);
-  new Enemy(cage.x + cage.w / 2, cage.y + 400);
-
-  drawObjects = [player, hut, merchant, ...enemies, cage];
-
-  collisionObjects = [cage, slide, hut, ...enemies];
 
   areas = {
     start: { col: [player, ...enemies], obst: [hut, cage], hit: [], hurt: [player] },
     hut: { col: [], obst: [], hit: [], hurt: [] },
   };
+
+  new Enemy(cage.x + cage.w / 2, cage.y + 400);
+
+  drawObjects = [player, hut, merchant, ...enemies, cage];
+
+  collisionObjects = [cage, slide, hut, ...enemies];
 
   startAnimating();
 }
