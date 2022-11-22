@@ -149,7 +149,12 @@ let player = {
     } else {
       this.vx = 0;
     }
-
+    if (input.Shift && fireball.cooldown < 0) {
+      this.vx = this.vx * 10
+      this.vy = this.vy * 10
+      this.animX = getAnimX(16, 5, 129);
+      this.animY = 2679;
+    }
     if (input.w) {
       this.vy = -player.speed;
       this.animX = getAnimX(8, 5, 129);
@@ -174,7 +179,6 @@ let player = {
       this.vx = Math.sign(this.vx) * speed;
       this.vy = Math.sign(this.vy) * speed;
     }
-
     this.x += this.vx;
     this.y += this.vy;
   },
@@ -383,7 +387,7 @@ class Enemy {
     this.vx = 0;
     this.vy = 0;
     this.dead = false;
-    this.speed = 7;
+    this.speed = goblinspeed;
     this.type = "enemy";
     this.area = "start";
     this.target = player;
@@ -430,16 +434,16 @@ class Enemy {
     //   }
     // }
     const animY = Math.round((this.angle * 9) / Math.PI + 9) % 18;
-    // if (Math.abs(this.x - player.x) + Math.abs(this.y - player.y) < 300) {
-    //   ctx.drawImage(atk, getAnimX(4, 4, 122), Math.floor(animY / 2) * 124, 80, 80, this.x - 25, this.y - 15, this.w, this.h);
-    //   ctx.save();
-    //   ctx.translate(this.x + this.w / 2, this.y + this.h / 2);
-    //   ctx.rotate(50 * this.angle * (Math.PI / 180));
-    //   ctx.drawImage(atkwave, getAnimX(4, 4, 128), 0, 130, 128, 100 - this.w / 2, -300 / 2, this.w, 300);
-    //   ctx.restore();
-    // } else {
+    if (Math.abs(this.x - player.x) + Math.abs(this.y - player.y) < 300) {
+      ctx.drawImage(atk, getAnimX(4, 4, 122), animY * 124, 80, 80, this.x - 25, this.y - 15, this.w, this.h);
+      ctx.save();
+      ctx.translate(this.x + this.w / 2, this.y + this.h / 2);
+      ctx.rotate(50 * this.angle * (Math.PI / 180));
+      ctx.drawImage(atkwave, getAnimX(4, 4, 128), 0, 130, 128, 100 - this.w / 2, -300 / 2, this.w, 300);
+      ctx.restore();
+    } else {
     ctx.drawImage(barb, getAnimX(8, 10, 122), animY * 124, 80, 80, this.x - 25, this.y - 15, this.w, this.h);
-    //   }
+      }
   }
 }
 
