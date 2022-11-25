@@ -455,7 +455,10 @@ class Enemy {
     this.x += this.vx;
     this.y += this.vy;
   }
-
+  golemsplit() {
+    new Enemy(this.x + 100, this.y);
+    new Enemy(this.x - 100, this.y);
+  }
   draw() {
     if (this.dead) return ctx.drawImage(deadboy, this.x, this.y, this.w, this.h);
     // dogshit knockback
@@ -473,6 +476,7 @@ class Enemy {
     //     }
     //   }
     // }
+
     const animY = Math.round((this.angle * 9) / Math.PI + 9) % 18;
     if (Math.abs(this.x - player.x) + Math.abs(this.y - player.y) < 150) {
       ctx.drawImage(atk, getAnimX(4, 4, 122), animY * 124, 122, 124, this.x, this.y, this.w, this.h);
@@ -546,9 +550,11 @@ function checkCollision() {
         for (const hurt of hurtArr) {
           const inside = checkIfInside(hit, hurt);
           const hitOwner = hit.owner.attacker || hit.owner;
-
           if (inside && hitOwner.name != hurt.owner.name) {
-            hurt.callback(hit, hurt);
+              if (inside && hitOwner.name != hurt.owner.name && hurt.owner.name == "enemy"){
+                Enemy.golemsplit();
+              }
+              hurt.callback(hit, hurt);
             if (hit.callback) hit.callback(hit, hurt);
           }
         }
@@ -556,6 +562,13 @@ function checkCollision() {
     }
   }
 }
+
+// function golemsplit() {  
+//   if (inside && hitOwner.name != hurt.owner.name && hurt.owner.name == "enemy"){
+//     new Enemy(100, 100);
+//     new Enemy(100, 100);
+//     }
+//   }
 
 function checkIfInside(box1, box2) {
   const pos1 = box1.getPos();
