@@ -1,7 +1,8 @@
 const c = document.getElementById("myCanvas");
 const ctx = c.getContext("2d");
-c.width = window.innerWidth;
-c.height = window.innerHeight - 3.5;
+
+c.width = window.innerWidth < window.innerHeight ? window.innerWidth : window.innerHeight;
+c.height = c.width;
 
 const up = document.getElementById("up");
 const down = document.getElementById("down");
@@ -46,6 +47,7 @@ const getshurt = new Audio("gets hurt.mp3");
 const nextlevelsound = new Audio("goes to next level.mp3");
 const punchsound = new Audio("punches.mp3");
 const tikisound = new Audio("tikitotem spawn in.mp3");
+const music = new Audio("most terrible bass.mp3");
 
 document.addEventListener("keydown", keydownHandler);
 document.addEventListener("keyup", keyupHandler);
@@ -81,7 +83,6 @@ let sizemultiplier = 1;
 let money = 100;
 let goblinspeed = 2.4;
 let level = 1;
-let background = bg;
 let mouse = {};
 let frameCount = 0;
 let input = {};
@@ -93,8 +94,8 @@ let frameRate;
 let animLoop = { maxFps: 80 };
 
 let player = {
-  x: 750,
-  y: c.height * 0.7,
+  x: c.width / 2 - 45,
+  y: c.height / 2,
   w: 90,
   h: 70,
   i: dart,
@@ -111,10 +112,10 @@ let player = {
   hp: Infinity,
   name: "player",
   area: "start",
-  bSpeed: 5,
+  bSpeed: 9,
   gSpeed: 5,
-  bReload: 100,
-  gReload: 500,
+  bReload: 126,
+  gReload: 126 * 2,
   draw: function () {
     this.invincibility--;
     this.bCooldown--;
@@ -147,11 +148,11 @@ let player = {
     } else {
       this.vx = 0;
     }
-    if (input.shift) {
-      this.vx = this.vx * 4;
-      this.vy = this.vy * 4;
-      this.animX = getAnimX(16, 5, 129);
-    }
+    // if (input.shift) {
+    //   this.vx = this.vx * 4;
+    //   this.vy = this.vy * 4;
+    //   this.animX = getAnimX(16, 5, 129);
+    // }
     if (input.w) {
       this.vy = -player.speed;
       this.animX = getAnimX(8, 5, 129);
@@ -177,7 +178,7 @@ let player = {
       this.vy = Math.sign(this.vy) * speed;
     }
     this.x += this.vx;
-    this.y += this.vy;
+    this.y += this.vy / 2;
   },
 
   blink: function () {
@@ -199,7 +200,7 @@ let player = {
   throw: function () {
     if (this.gCooldown <= 0 && input.e) {
       this.gCooldown = this.gReload;
-      new Projectile(this, this.x + 90 * Math.cos(this.facing), this.y + 90 * Math.sin(this.facing), "grenade", this.gSpeed);
+      new Projectile(this, this.x, this.y, "grenade", this.gSpeed);
     }
   },
 
@@ -294,6 +295,8 @@ let hut = {
   i: imghut,
   name: "hut",
   draw: function () {
+    // if (skipFrame()) return;
+    this.y -= player.vy / 2;
     ctx.drawImage(this.i, this.x, this.y, this.w, this.h);
   },
 };
@@ -310,8 +313,14 @@ let merchant = {
   },
 };
 
+let background = {
+  i: bg,
+  x: 0,
+  y: 0,
+};
+
 class Box {
-  constructor(owner, cx, cy, cw, ch, callback, inverse) {
+  constructor(owner, cx, cy, cw, ch, callback, inverse, move) {
     this.owner = owner;
     this.cx = cx;
     this.cy = cy;
@@ -319,6 +328,7 @@ class Box {
     this.ch = ch;
     this.callback = callback;
     this.inverse = inverse;
+    this.move = move;
 
     boxes.push(this);
   }
@@ -348,16 +358,16 @@ class Projectile {
     this.name = "projectile";
     this.type = type;
     this.area = attacker.area;
-    this.hitbox = new Box(this, 0.35, 0.25, 0.3, 0.6, this.callback);
-    this.colbox = new Box(this, 0.35, 0.25, 0.3, 0.6, this.callback);
     this.attacker = attacker;
     new Audio("shoot.mp3").play();
+
     if (this.type == "bullet") {
       this.i = fireballImg;
       this.rowNum = 3;
       this.frameSpeed = 15;
       this.frameW = 250;
       this.frameH = 118;
+      this.callback = this.bCallback;
 
       this.w = 100 * sizemultiplier;
       this.h = 50 * sizemultiplier;
@@ -370,10 +380,14 @@ class Projectile {
       this.frameSpeed = 5.5;
       this.frameW = 122;
       this.frameH = 116;
+      this.callback = this.gCallback;
 
       this.w = 70 * sizemultiplier;
       this.h = 70 * sizemultiplier;
     }
+
+    this.hitbox = new Box(this, 0.35, 0.25, 0.3, 0.6, this.callback);
+    this.colbox = new Box(this, 0.35, 0.25, 0.3, 0.6, this.callback);
 
     areas[this.area].col.push(this);
     areas[this.area].hit.push(this);
@@ -388,7 +402,7 @@ class Projectile {
 
   move() {
     this.x += this.vx;
-    this.y += this.vy;
+    this.y += this.vy - player.vy / 2;
   }
 
   draw() {
@@ -411,9 +425,19 @@ class Projectile {
     ctx.restore();
   }
 
-  callback(col, obst) {
+  bCallback(col, obst) {
     removeFromArray(col.owner, areas[col.owner.area].col);
     removeFromArray(col.owner, areas[col.owner.area].hit);
+  }
+
+  gCallback(col, obst) {
+    const thisP = col.owner;
+    thisP.i = imgpoison;
+    removeFromArray(thisP, areas[thisP.area].col);
+    removeFromArray(thisP, areas[thisP.area].hit);
+    areas[thisP.area].draw.push(thisP);
+    thisP.vx = 0;
+    thisP.vy = 0;
   }
 }
 
@@ -453,7 +477,7 @@ class Enemy {
     if (rise) this.vy = this.speed * Math.sin(this.angle);
 
     this.x += this.vx;
-    this.y += this.vy;
+    this.y += this.vy - player.vy / 2;
   }
 
   draw() {
@@ -561,61 +585,63 @@ function checkIfInside(box1, box2) {
   const pos1 = box1.getPos();
   const pos2 = box2.getPos();
 
+  let left;
+  let right;
+  let top;
+  let bottom;
+
   if (box2.inverse) {
-    let lessThanLeft;
-    let greaterThanRight;
-    let lessThanTop;
-    let greaterThanBottom;
-
     if (box1.owner.name == "projectile") {
-      lessThanLeft = pos1.x + pos1.w < pos2.x ? true : false;
-      greaterThanRight = pos1.x > pos2.x + pos2.w ? true : false;
-      lessThanTop = pos1.y + pos1.h < pos2.y ? true : false;
-      greaterThanBottom = pos1.y > pos2.y + pos2.h ? true : false;
+      left = pos1.x + pos1.w < pos2.x ? true : false;
+      right = pos1.x > pos2.x + pos2.w ? true : false;
+      top = pos1.y + pos1.h < pos2.y ? true : false;
+      bottom = pos1.y > pos2.y + pos2.h ? true : false;
     } else {
-      lessThanLeft = pos1.x < pos2.x ? true : false;
-      greaterThanRight = pos1.x + pos1.w > pos2.x + pos2.w ? true : false;
-      lessThanTop = pos1.y < pos2.y ? true : false;
-      greaterThanBottom = pos1.y + pos1.h > pos2.y + pos2.h ? true : false;
+      left = pos1.x < pos2.x ? true : false;
+      right = pos1.x + pos1.w > pos2.x + pos2.w ? true : false;
+      top = pos1.y < pos2.y ? true : false;
+      bottom = pos1.y + pos1.h > pos2.y + pos2.h ? true : false;
     }
-
-    return lessThanLeft || greaterThanRight || lessThanTop || greaterThanBottom;
+  } else {
+    left = pos1.x + pos1.w > pos2.x ? true : false;
+    right = pos1.x < pos2.x + pos2.w ? true : false;
+    top = pos1.y + pos1.h > pos2.y ? true : false;
+    bottom = pos1.y < pos2.y + pos2.h ? true : false;
   }
 
-  const greaterThanLeft = pos1.x + pos1.w > pos2.x ? true : false;
-  const lessThanRight = pos1.x < pos2.x + pos2.w ? true : false;
-  const greaterThanTop = pos1.y + pos1.h > pos2.y ? true : false;
-  const lessThanBottom = pos1.y < pos2.y + pos2.h ? true : false;
+  // left = pos1.x + pos1.w > pos2.x ? true : false;
+  // right = pos1.x < pos2.x + pos2.w ? true : false;
+  // top = pos1.y + pos1.h > pos2.y ? true : false;
+  // bottom = pos1.y < pos2.y + pos2.h ? true : false;
 
-  return greaterThanLeft && lessThanRight && greaterThanTop && lessThanBottom;
+  return left && right && top && bottom;
 }
 
 function goToClosest(box1, box2) {
   const pos1 = box1.getPos();
   const pos2 = box2.getPos();
 
-  let side1 = Math.abs(pos1.x + pos1.w - pos2.x);
-  let side2 = Math.abs(pos1.x - (pos2.x + pos2.w));
-  let side3 = Math.abs(pos1.y + pos1.h - pos2.y);
-  let side4 = Math.abs(pos1.y - (pos2.y + pos2.h));
+  const side1 = Math.abs(pos1.x + pos1.w - pos2.x);
+  const side2 = Math.abs(pos1.x - (pos2.x + pos2.w));
+  const side3 = Math.abs(pos1.y + pos1.h - pos2.y);
+  const side4 = Math.abs(pos1.y - (pos2.y + pos2.h));
 
-  let closest = Math.min(side1, side2, side3, side4);
+  const closest = Math.min(side1, side2, side3, side4);
 
   const dx = box1.owner.x - pos1.x;
   const dy = box1.owner.y - pos1.y;
 
   if (box2.inverse) {
-    if (side1 == closest) {
+    if (pos1.x < pos2.x) {
       box1.owner.x = pos2.x + dx;
-    } else if (side2 == closest) {
+    } else if (pos1.x + pos1.w > pos2.x + pos2.w) {
       box1.owner.x = pos2.x + pos2.w - pos1.w + dx;
-    } else if (side3 == closest) {
+    }
+    if (pos1.y < pos2.y) {
       box1.owner.y = pos2.y + dy;
-    } else if (side4 == closest) {
+    } else if (pos1.y + pos1.h > pos2.y + pos2.h) {
       box1.owner.y = pos2.y + pos2.h - pos1.h + dy;
     }
-
-    console.log(side1, side2, side3, side4);
 
     return;
   }
@@ -643,7 +669,7 @@ function enterHut(col, obst) {
   trigger.y = c.height - trigger.h + 15;
 
   if (trigger.name == "player") {
-    background = shop;
+    background.i = shop;
     sizemultiplier = 2;
     for (let i = 0; i < enemies.length; i++) {
       enemies[i].target = getNewTarget(enemies[i].area);
@@ -665,7 +691,7 @@ function exitHut(col, obst) {
   trigger.y = hut.y + hut.h;
 
   if (trigger.name == "player") {
-    background = bg;
+    background.i = bg;
     sizemultiplier = 1;
     for (let i = 0; i < enemies.length; i++) {
       enemies[i].target = getNewTarget(enemies[i].area);
@@ -771,7 +797,7 @@ function setup() {
   cage.colbox = new Box(cage, 0, 0, 1, 1);
   hut.colbox = new Box(hut, 0.1, 0.1, 0.8, 0.8);
 
-  startColbox = new Box({ x: 0, y: 0, w: c.width, h: c.height }, 0, 0, 1, 1, null, true);
+  startColbox = new Box({ x: 0, y: 0, w: c.width, h: c.height }, 0, 0, 1, 1, null, true, false);
   hutColbox = new Box({ x: 100, y: 100, w: 600, h: 600 }, 0, 0, 1, 1, null, true);
 
   const hutboxPos = hut.colbox.getPos();
@@ -809,12 +835,10 @@ function skipFrame() {
 
 function loop() {
   requestAnimationFrame(loop);
-
+  music.play();
   if (skipFrame()) return;
-
-  ctx.drawImage(background, 0, 0, 1431, 880, 0, 0, c.width, c.height);
-
-  adadaLife();
+  background.y += player.vy / 2;
+  ctx.drawImage(background.i, 0, background.y, 1431, 880, background.x, 0, c.width, c.height);
 
   for (const area in areas) {
     for (const col of areas[area].col) {
@@ -833,11 +857,14 @@ function loop() {
 
   for (let i = 0; i < playerArea.obst.length; i++) {
     const box = playerArea.obst[i];
-    if (!box.owner) box.draw();
+    if (!box.owner) {
+      box.draw();
+    }
   }
 
   for (let i = 0; i < playerArea.draw.length; i++) {
-    playerArea.draw[i].draw();
+    const box = playerArea.draw[i];
+    box.draw();
   }
 
   // for (const area in areas) {
@@ -877,9 +904,11 @@ function loop() {
 
   ctx.font = "48px serif";
   ctx.fillStyle = "white";
+  adadaLife();
   ctx.fillText(money, 300, 100);
-
   frameCount++;
 }
 
 setup();
+mouse.y = 900;
+mouse.x = c.width / 2 - 45;
