@@ -3,6 +3,9 @@ const ctx = c.getContext("2d");
 
 c.width = window.innerWidth < window.innerHeight ? window.innerWidth : window.innerHeight;
 c.height = c.width;
+// c.height = 943
+
+
 
 const up = document.getElementById("up");
 const down = document.getElementById("down");
@@ -95,7 +98,7 @@ let animLoop = { maxFps: 80 };
 
 let player = {
   x: c.width / 2 - 45,
-  y: c.height / 2,
+  y: 0,
   w: 90,
   h: 70,
   i: dart,
@@ -296,7 +299,6 @@ let hut = {
   name: "hut",
   draw: function () {
     // if (skipFrame()) return;
-    this.y -= player.vy / 2;
     ctx.drawImage(this.i, this.x, this.y, this.w, this.h);
   },
 };
@@ -503,14 +505,14 @@ class Enemy {
 
     const animY = Math.round((this.angle * 9) / Math.PI + 9) % 18;
     if (Math.abs(this.x - player.x) + Math.abs(this.y - player.y) < 150) {
-      ctx.drawImage(atk, getAnimX(4, 4, 122), animY * 124, 122, 124, this.x, this.y, this.w, this.h);
+      ctx.drawImage(atk, getAnimX(4, 4, 208), animY * 219, 208, 219, this.x, this.y, this.w, this.h);
       // ctx.save();
       // ctx.translate(this.x + this.w / 2, this.y + this.h / 2);
       // ctx.rotate(50 * this.angle * (Math.PI / 180));
       // ctx.drawImage(atkwave, getAnimX(4, 4, 128), 0, 130, 128, 100 - this.w / 2, -300 / 2, this.w, 300);
       // ctx.restore();
     } else {
-      ctx.drawImage(barb, getAnimX(8, 10, 122), animY * 124, 122, 124, this.x, this.y, this.w, this.h);
+      ctx.drawImage(barb, getAnimX(8, 10, 208), animY * 219, 208, 219, this.x, this.y, this.w, this.h);
     }
   }
 
@@ -622,10 +624,10 @@ function checkIfInside(box1, box2) {
     bottom = pos1.y < pos2.y + pos2.h ? true : false;
   }
 
-  // left = pos1.x + pos1.w > pos2.x ? true : false;
-  // right = pos1.x < pos2.x + pos2.w ? true : false;
-  // top = pos1.y + pos1.h > pos2.y ? true : false;
-  // bottom = pos1.y < pos2.y + pos2.h ? true : false;
+  left = pos1.x + pos1.w > pos2.x ? true : false; 
+  right = pos1.x < pos2.x + pos2.w ? true : false;
+  top = pos1.y + pos1.h > pos2.y ? true : false;
+  bottom = pos1.y < pos2.y + pos2.h ? true : false;
 
   return left && right && top && bottom;
 }
@@ -651,9 +653,12 @@ function goToClosest(box1, box2) {
       box1.owner.x = pos2.x + pos2.w - pos1.w + dx;
     }
     if (pos1.y < pos2.y) {
-      box1.owner.y = pos2.y + dy;
+      box1.owner.y = pos2.y + dy; 
+      player.vy = 0;
     } else if (pos1.y + pos1.h > pos2.y + pos2.h) {
       box1.owner.y = pos2.y + pos2.h - pos1.h + dy;
+      player.vy = 0;
+
     }
 
     return;
@@ -848,9 +853,12 @@ function skipFrame() {
 
 function loop() {
   requestAnimationFrame(loop);
-  music.play();
+  // music.play();
   if (skipFrame()) return;
   background.y += player.vy / 2;
+  hut.y += -player.vy / 1.75;
+  cage.y += -player.vy / 1.75;
+  
   ctx.drawImage(background.i, 0, background.y, 1431, 880, background.x, 0, c.width, c.height);
 
   for (const area in areas) {
