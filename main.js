@@ -36,9 +36,12 @@ const imgcoins = document.getElementById("coins");
 const imgcoin = document.getElementById("coin");
 const deadboy = document.getElementById("deadenemy");
 const imgtikitrophy = document.getElementById("tiki");
+
 const dart = document.getElementById("dart");
-const barb = document.getElementById("barb");
-const atk = document.getElementById("atk");
+const barb = document.getElementById("hog");
+const atk = document.getElementById("hogatk");
+const hog = document.getElementById("hog");
+const hogatk = document.getElementById("hogatk");
 const atkwave = document.getElementById("wave");
 
 let fireballImg = document.getElementById("fireball");
@@ -84,7 +87,7 @@ function mousemoveHandler(event) {
 let timer = 1;
 let sizemultiplier = 1;
 let money = 100;
-let goblinspeed = 2.4;
+let goblinspeed = 3.4;
 let level = 1;
 let mouse = {};
 let frameCount = 0;
@@ -505,14 +508,14 @@ class Enemy {
 
     const animY = Math.round((this.angle * 9) / Math.PI + 9) % 18;
     if (Math.abs(this.x - player.x) + Math.abs(this.y - player.y) < 150) {
-      ctx.drawImage(atk, getAnimX(4, 4, 208), animY * 219, 208, 219, this.x, this.y, this.w, this.h);
+      ctx.drawImage(atk, getAnimX(8, 5, 208), animY * 219, 208, 219, this.x, this.y, this.w, this.h);
       // ctx.save();
       // ctx.translate(this.x + this.w / 2, this.y + this.h / 2);
       // ctx.rotate(50 * this.angle * (Math.PI / 180));
       // ctx.drawImage(atkwave, getAnimX(4, 4, 128), 0, 130, 128, 100 - this.w / 2, -300 / 2, this.w, 300);
       // ctx.restore();
     } else {
-      ctx.drawImage(barb, getAnimX(8, 10, 208), animY * 219, 208, 219, this.x, this.y, this.w, this.h);
+      ctx.drawImage(barb, getAnimX(8, 5, 208), animY * 219, 208, 219, this.x, this.y, this.w, this.h);
     }
   }
 
@@ -828,7 +831,6 @@ function setup() {
   };
 
   new Enemy(cage.x + cage.w / 2, cage.y + 400);
-
   startAnimating();
 }
 
