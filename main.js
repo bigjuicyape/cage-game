@@ -102,8 +102,8 @@ let frameRate;
 let animLoop = { maxFps: 80 };
 
 let player = {
-  x: 210,
-  y: 210,
+  x: 410,
+  y: 410,
   w: 90,
   h: 70,
   i: dart,
@@ -237,7 +237,7 @@ let player = {
 
 let cage = {
   x: 400,
-  y: 300,
+  y: 400,
   w: 100,
   h: 100,
   i: imgcage,
@@ -586,15 +586,15 @@ function checkCollision() {
     function colAgainstObst() {
       for (const col of colArr) {
         for (const obst of obstArr) {
-          const inside = checkIfInside(col, obst);
-          if (!inside) continue;
+          const colData = checkIfInside(col, obst);
+          if (!colData.colliding) continue;
           // if (!inside) continue;
           if (col.callback) {
             col.callback(col, obst);
           } else if (obst.callback) {
             obst.callback(col, obst);
           } else {
-            goToClosest(col, obst);
+            resolveCollision(col, obst, colData);
           }
         }
       }
@@ -603,9 +603,9 @@ function checkCollision() {
     function hitAgainstHurt() {
       for (const hit of hitArr) {
         for (const hurt of hurtArr) {
-          const inside = checkIfInside(hit, hurt);
+          const colData = checkIfInside(hit, hurt);
           const hitOwner = hit.owner.attacker || hit.owner;
-          if (inside && hitOwner.name != hurt.owner.name) {
+          if (colData.colliding && hitOwner.name != hurt.owner.name) {
             hurt.callback(hit, hurt);
             if (hit.callback) hit.callback(hit, hurt);
           }
@@ -625,38 +625,25 @@ function checkCollision() {
 function checkIfInside(box1, box2) {
   const pos1 = box1.getPos();
   const pos2 = box2.getPos();
-  let inside;
+  let colData;
 
   if (box2.wallSize) {
-    const leftWall = checkWall(pos2.x, pos2.y, "vertical");
-    const rightWall = checkWall(pos2.x + pos2.w - box2.wallSize, pos2.y, "vertical");
-    const topWall = checkWall(pos2.x, pos2.y, "horizontal");
-    const bottomWall = checkWall(pos2.x, pos2.y + pos2.h - box2.wallSize, "horizontal");
+    const leftWall = checkWall("vertical", pos2.x, pos2.y);
+    const rightWall = checkWall("vertical", pos2.x + pos2.w - box2.wallSize, pos2.y);
+    const topWall = checkWall("horizontal", pos2.x + box2.wallSize, pos2.y);
+    const bottomWall = checkWall("horizontal", pos2.x + box2.wallSize, pos2.y + pos2.h - box2.wallSize);
 
-    inside = leftWall || rightWall || topWall || bottomWall;
+    colData = { colliding: leftWall || rightWall || topWall || bottomWall, left: leftWall, right: rightWall, top: topWall, bottom: bottomWall };
   } else {
-    inside = checkWall(pos2.x, pos2.y);
+    colData = { colliding: checkWall() };
   }
 
-  // const leftWall = pos1.x + pos1.w > pos2.x ? true : false;
-  // const rightWall = pos1.x < pos2.x + pos2.w ? true : false;
-  // const topWall = pos1.y + pos1.h > pos2.y ? true : false;
-  // const bottomWall = pos1.y < pos2.y + pos2.h ? true : false;
-  // inside = leftWall && rightWall && topWall && bottomWall;
-
-  function checkWall(x, y, type) {
-    let w, h;
-
-    if (type == "vertical") {
-      w = box2.wallSize;
-      h = pos2.h;
-    } else if (type == "horizontal") {
-      w = pos2.w;
-      h = box2.wallSize;
-    } else {
-      w = pos2.w;
-      h = pos2.h;
-    }
+  function checkWall(orientation, wallX, wallY) {
+    const dimensions = getDimensions(orientation, pos2, { x: wallX, y: wallY, size: box2.wallSize });
+    const x = dimensions.x;
+    const y = dimensions.y;
+    const w = dimensions.w;
+    const h = dimensions.h;
 
     const left = pos1.x + pos1.w > x ? true : false;
     const right = pos1.x < x + w ? true : false;
@@ -668,90 +655,56 @@ function checkIfInside(box1, box2) {
     return left && right && top && bottom;
   }
 
-  return inside;
-  // return leftWall && rightWall && topWall && bottomWall;
+  return colData;
 }
 
-function goToClosest(box1, box2) {
+function resolveCollision(box1, box2, colData) {
   const pos1 = box1.getPos();
   const pos2 = box2.getPos();
-
-  const side1 = Math.abs(pos1.x + pos1.w - pos2.x);
-  const side2 = Math.abs(pos1.x - (pos2.x + pos2.w));
-  const side3 = Math.abs(pos1.y + pos1.h - pos2.y);
-  const side4 = Math.abs(pos1.y - (pos2.y + pos2.h));
 
   const dx = box1.owner.x - pos1.x;
   const dy = box1.owner.y - pos1.y;
 
   if (box2.wallSize) {
-    // const side5 = 100
-    // const side6 = 100;
-    // const side7 = 100;
-    // const side8 = 100;
-    const side5 = Math.abs(pos1.x + pos1.w - (pos2.x + pos2.w - box2.wallSize));
-    const side6 = Math.abs(pos1.x - (pos2.x + box2.wallSize));
-    const side7 = Math.abs(pos1.y + pos1.h - (pos2.y + pos2.h - box2.wallSize));
-    const side8 = Math.abs(pos1.y - (pos2.y + box2.wallSize));
-
-    const closest = Math.min(side1, side2, side3, side4, side5, side6, side7, side8);
-
-    if (box1.owner.vx > 0) {
-      if (side1 == closest) {
-        goLeft(pos2.x);
-        // console.log(1);
-      } else if (side5 == closest) {
-        goLeft(pos2.x + pos2.w - box2.wallSize);
-        // console.log(5);
-      }
+    if (colData.left) {
+      goToClosest("vertical", pos2.x, pos2.y);
     }
-    // else {
-    //   if (side2 == closest) {
-    //     goRight(pos2.x + pos2.w);
-    //     // console.log(2);
-    //   } else if (side6 == closest) {
-    //     goLeft(pos2.x);
-    //     // console.log(6);
-    //   }
-    // }
-
-    // if (box1.owner.vy < 0) {
-    //   if (side3 == closest) {
-    //     goTop(pos2.y);
-    //     // console.log(3);
-    //   } else if (side7 == closest) {
-    //     goBottom(pos2.y + pos2.h);
-    //     // console.log(7);
-    //   }
-    // } else {
-    //   if (side4 == closest) {
-    //     goBottom(pos2.y + pos2.h);
-    //     // console.log(4);
-    //   } else {
-    //     goTop(pos2.y);
-    //     // console.log(8);
-    //   }
-    // }
-
-    ctx.strokeRect(pos2.x, 0, 1, c.height);
-    ctx.strokeRect(pos2.x + pos2.w - box2.wallSize, 0, 1, c.height);
-    ctx.strokeRect(pos1.x + pos1.w, 0, 1, c.height);
-    // ctx.strokeRect(pos2.x + pos2.w - box2.wallSize, 0, 1, c.height);
-    // console.log(Math.abs(pos1.x - (pos2.x + box2.wallSize)), Math.abs(pos1.x + pos1.w - (pos2.x + pos2.w - box2.wallSize)));
-
-    return;
+    if (colData.right) {
+      goToClosest("vertical", pos2.x + pos2.w - box2.wallSize, pos2.y);
+    }
+    if (colData.top) {
+      goToClosest("horizontal", pos2.x + box2.wallSize, pos2.y);
+    }
+    if (colData.bottom) {
+      goToClosest("horizontal", pos2.x + box2.wallSize, pos2.y + pos2.h - box2.wallSize);
+    }
+  } else {
+    goToClosest();
   }
 
-  const closest = Math.min(side1, side2, side3, side4);
+  function goToClosest(orientation, wallX, wallY) {
+    const dimensions = getDimensions(orientation, pos2, { x: wallX, y: wallY, size: box2.wallSize });
+    const x = dimensions.x;
+    const y = dimensions.y;
+    const w = dimensions.w;
+    const h = dimensions.h;
 
-  if (side1 == closest) {
-    goLeft(pos2.x);
-  } else if (side2 == closest) {
-    goRight(pos2.x + pos2.w);
-  } else if (side3 == closest) {
-    goTop(pos2.y);
-  } else if (side4 == closest) {
-    goBottom(pos2.y + pos2.h);
+    const side1 = Math.abs(pos1.x + pos1.w - x);
+    const side2 = Math.abs(pos1.x - (x + w));
+    const side3 = Math.abs(pos1.y + pos1.h - y);
+    const side4 = Math.abs(pos1.y - (y + h));
+
+    const closest = Math.min(side1, side2, side3, side4);
+
+    if (side1 == closest) {
+      goLeft(x);
+    } else if (side2 == closest) {
+      goRight(x + w);
+    } else if (side3 == closest) {
+      goTop(y);
+    } else if (side4 == closest) {
+      goBottom(y + h);
+    }
   }
 
   function goLeft(x) {
@@ -773,6 +726,27 @@ function goToClosest(box1, box2) {
     box1.owner.y = y + dy;
     box1.owner.vy = 0;
   }
+}
+
+function getDimensions(orientation, pos, wall) {
+  if (orientation == "vertical") {
+    x = wall.x;
+    y = wall.y;
+    w = wall.size;
+    h = pos.h;
+  } else if (orientation == "horizontal") {
+    x = wall.x;
+    y = wall.y;
+    w = pos.w - 2 * wall.size;
+    h = wall.size;
+  } else {
+    x = pos.x;
+    y = pos.y;
+    w = pos.w;
+    h = pos.h;
+  }
+
+  return { x: x, y: y, w: w, h: h };
 }
 
 function enterHut(col, obst) {
@@ -912,11 +886,11 @@ function adadaLife() {
 function setup() {
   player.colbox = new Box(player, 0.17, 0.15, 0.6, 0.7);
   player.hurtbox = new Box(player, 0.17, 0.15, 0.6, 0.7, player.hurtCallback);
-  cage.colbox = new Box(cage, 0, 0, 1, 1);
+  cage.colbox = new Box(cage, 0, 0, 1, 1, null, 10);
   hut.colbox = new Box(hut, 0.1, 0.1, 0.8, 0.8);
 
-  startColbox = new Box({ x: 200, y: 200, w: 100, h: 100 }, 0, 0, 1, 1, null, 20);
-  hutColbox = new Box({ x: 100, y: 100, w: 600, h: 600 }, 0, 0, 1, 1, null, 1);
+  startColbox = new Box({ x: 200, y: 200, w: 100, h: 100 }, 0, 0, 1, 1);
+  hutColbox = new Box({ x: 100, y: 100, w: 600, h: 600 }, 0, 0, 1, 1);
 
   const hutboxPos = hut.colbox.getPos();
   hutEntry = new Box({ x: hutboxPos.x + 50, y: hutboxPos.y + hutboxPos.h, w: hutboxPos.w - 100, h: 1 }, 0, 0, 1, 1, enterHut);
@@ -928,7 +902,7 @@ function setup() {
     hut: { draw: [], col: [], obst: [hutExit, hutColbox], hit: [], hurt: [] },
   };
 
-  // new Enemy(cage.x + cage.w / 2, cage.y + 400);
+  // new Enemy(210, 210);
   // new Enemy(cage.x + cage.w / 2, cage.y + 400);
 
   startAnimating();
